@@ -36,15 +36,31 @@ export default function LoginPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
                 </div>
-                <span className="text-blue-600 font-bold text-lg tracking-tight">MEDIOGRAPH</span>
+                <span className="text-blue-600 font-bold text-lg tracking-tight">MedFlow</span>
               </div>
             </div>
             
+            {/* Avatar patient (nouveau) */}
+            <div className="flex items-center justify-center my-4">
+              <div className="w-28 h-28 bg-white/10 rounded-full flex items-center justify-center border border-white/20 shadow-md">
+                {/* Patient avatar SVG */}
+                <svg className="w-16 h-16 text-white/95" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4z" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M4 20c0-3.3137 2.6863-6 6-6h4c3.3137 0 6 2.6863 6 6" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+            </div>
+
             <div>
-              <h2 className="text-3xl font-bold mb-3 leading-tight">Experience Healthcare<br />Like Youve at a Time</h2>
-              <p className="text-blue-100 text-base">Your Health, Your Records, Your Control</p>
+              <h2 className="text-3xl font-extrabold italic mb-3 leading-tight tracking-tight">Experience Healthcare<br />Like Youve at a Time</h2>
+              <p className="text-blue-100 italic text-sm tracking-wide">Your Health, Your Records, Your Control</p>
             </div>
           </div>
+
+          {/* légère illustration de fond (silhouette, opacity faible) */}
+          <svg className="absolute right-0 bottom-0 w-3/5 opacity-10" viewBox="0 0 600 600" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+            <circle cx="300" cy="300" r="200" fill="white"/>
+          </svg>
         </div>
 
         {/* Section droite avec formulaire */}
@@ -61,8 +77,8 @@ export default function LoginPage() {
             </div>
 
             {/* Titre */}
-            <h1 className="text-2xl font-bold text-gray-900 text-center mb-1">Login</h1>
-            <p className="text-gray-500 text-center mb-6 text-xs">Welcome back! Please login to your account</p>
+            <h1 className="text-2xl font-extrabold italic text-gray-900 text-center mb-1">Login</h1>
+            <p className="text-gray-500 italic text-center mb-6 text-xs">Welcome back! Please login to your account</p>
 
             {/* Formulaire */}
             <form onSubmit={handleSubmit} className="space-y-4">

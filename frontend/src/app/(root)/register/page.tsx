@@ -41,8 +41,8 @@ export default function RegisterPage() {
       <div className="w-full max-w-5xl bg-white rounded-2xl shadow-2xl flex h-[600px]">
         
         {/* Left section with medical image */}
-        <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-cyan-500 via-blue-600 to-blue-700">
-          <div className="flex flex-col justify-between p-8 text-white w-full">
+        <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-blue-500 via-blue-600 to-cyan-500 relative overflow-hidden">
+          <div className="relative z-10 flex flex-col justify-between p-8 text-white w-full">
             {/* Logo */}
             <div>
               <div className="inline-flex items-center bg-white px-4 py-2 rounded-full shadow-xl">
@@ -51,19 +51,37 @@ export default function RegisterPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
                 </div>
-                <span className="text-blue-600 font-bold text-lg tracking-tight">MEDIOGRAPH</span>
+                <span className="text-blue-600 font-bold text-lg tracking-tight">MedFlow</span>
               </div>
             </div>
             
+            {/* Avatar medecin (nouveau) */}
+            <div className="flex items-center justify-center my-4">
+              <div className="w-32 h-32 bg-white/10 rounded-full flex items-center justify-center border border-white/20 shadow-md">
+                {/* Doctor avatar SVG */}
+                <svg className="w-20 h-20 text-white/95" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden>
+                  <path d="M12 12c2.485 0 4.5-1.567 4.5-3.5S14.485 5 12 5 7.5 6.567 7.5 8.5 9.515 12 12 12z" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M4 20c0-3.314 2.686-6 6-6h4c3.314 0 6 2.686 6 6" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M9 14v2a3 3 0 003 3v0a3 3 0 003-3v-2" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M7 8h10" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+            </div>
+
             <div>
-              <h2 className="text-2xl font-bold mb-2 leading-tight">Join Our Medical<br />Platform Today</h2>
-              <p className="text-blue-100 text-sm">Start Managing Your Healthcare Records</p>
+              <h2 className="text-3xl font-extrabold italic mb-2 leading-tight tracking-tight">Join Our Medical<br />Platform Today</h2>
+              <p className="text-blue-100 italic text-sm tracking-wide">Start Managing Your Healthcare Records</p>
             </div>
           </div>
+
+          {/* subtle background shape */}
+          <svg className="absolute right-0 bottom-0 w-3/5 opacity-10" viewBox="0 0 600 600" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+            <circle cx="300" cy="300" r="200" fill="white"/>
+          </svg>
         </div>
 
         {/* Right section with form */}
-        <div className="w-full lg:w-1/2 flex items-center justify-center bg-white">
+        <div className=" border-r border-t border-b border-blue-500 rounded-r-2xl w-full lg:w-1/2 flex items-center justify-center p-8 bg-white">
           <div className="w-full max-w-sm p-6">
  
             {/* Icon */}
@@ -76,8 +94,8 @@ export default function RegisterPage() {
             </div>
 
             {/* Title */}
-            <h1 className="text-xl font-bold text-gray-900 text-center mb-1">Sign Up</h1>
-            <p className="text-gray-500 text-center mb-4 text-xs">Create your account to get started</p>
+            <h1 className="text-xl font-extrabold italic text-gray-900 text-center mb-1">Sign Up</h1>
+            <p className="text-gray-500 italic text-center mb-4 text-xs">Create your account to get started</p>
 
             {/* Form */}
             <div className="space-y-2.5">
