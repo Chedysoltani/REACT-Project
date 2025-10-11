@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "date-fns": "^4.1.0",
     "framer-motion": "^12.23.22",
     "lucide-react": "^0.545.0",
     "motion-ui": "^2.0.8",
