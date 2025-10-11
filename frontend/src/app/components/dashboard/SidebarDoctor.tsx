@@ -2,22 +2,22 @@
 import React from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Building2, Settings, Users2, LayoutDashboard, LogOut } from "lucide-react"
+import { CalendarDays, FileText, Pill, LayoutDashboard, LogOut } from "lucide-react"
 
-const SidebarAdmin = () => {
+const SidebarDoctor = () => {
   const pathname = usePathname()
 
   const menu = [
-    { name: "Dashboard", icon: <LayoutDashboard size={20} />, path: "/admin" },
-    { name: "Cliniques", icon: <Building2 size={20} />, path: "/admin/clinics" },
-    { name: "Services", icon: <Settings size={20} />, path: "/admin/services" },
-    { name: "Staff", icon: <Users2 size={20} />, path: "/admin/staff" },
+    { name: "Dashboard", icon: <LayoutDashboard size={20} />, path: "/doctor" },
+    { name: "Agenda", icon: <CalendarDays size={20} />, path: "/doctor/agenda" },
+    { name: "Dossiers Médicaux", icon: <FileText size={20} />, path: "/doctor/patients" },
+    { name: "Ordonnances", icon: <Pill size={20} />, path: "/doctor/ordonnances" },
   ]
 
   return (
     <div className="fixed left-0 top-0 h-screen w-64 bg-gradient-to-b from-indigo-600 to-indigo-800 text-white shadow-xl flex flex-col">
       <div className="p-5 text-center text-2xl font-semibold border-b border-indigo-500">
-        Admin Panel
+        Médecin
       </div>
 
       <nav className="flex-1 mt-4 space-y-2">
@@ -47,4 +47,4 @@ const SidebarAdmin = () => {
   )
 }
 
-export default SidebarAdmin
+export default SidebarDoctor

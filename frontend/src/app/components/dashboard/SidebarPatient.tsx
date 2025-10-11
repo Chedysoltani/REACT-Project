@@ -1,53 +1,58 @@
-"use client"
-import React, { useState } from "react"
-import { CalendarDays, FileText, CreditCard, Home, LogOut, Menu, X } from "lucide-react"
-import Link from "next/link"
+"use client";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { CalendarDays, FileText, CreditCard, ClipboardList, LogOut, Home } from "lucide-react";
 
-export default function SidebarPatient() {
-  const [open, setOpen] = useState(true)
+export default function SidebarPatient({
+  isOpen,
+  setIsOpen,
+}: {
+  isOpen: boolean;
+  setIsOpen: (v: boolean) => void;
+}) {
+  const pathname = usePathname();
 
-  const menuItems = [
-    { id: 1, name: "Tableau de bord", icon: <Home className="w-5 h-5" />, path: "/dashboard/patient" },
-    { id: 2, name: "Rendez-vous", icon: <CalendarDays className="w-5 h-5" />, path: "/dashboard/patient#rendezvous" },
-    { id: 3, name: "Historique", icon: <FileText className="w-5 h-5" />, path: "/dashboard/patient#historique" },
-    { id: 4, name: "Paiement", icon: <CreditCard className="w-5 h-5" />, path: "/dashboard/patient#paiement" },
-  ]
+  const links = [
+    { name: "Dashboard", href: "/homepatient", icon: Home },
+    { name: "Historique", href: "/historique", icon: ClipboardList },
+    { name: "Prochains Rendez-vous", href: "/rendezvous", icon: CalendarDays },
+    { name: "Réservation", href: "/reservation", icon: FileText },
+    { name: "Paiement", href: "/paiement", icon: CreditCard },
+    { name: "Ordonnances", href: "/ordonnances", icon: FileText },
+  ];
 
   return (
-    <div className="flex">
-      {/* Sidebar */}
-      <div
-        className={`${
-          open ? "w-64" : "w-20"
-        } bg-blue-700 text-white min-h-screen transition-all duration-300 flex flex-col`}
-      >
-        <div className="flex items-center justify-between p-4 border-b border-blue-500">
-          <h1 className={`${open ? "block" : "hidden"} text-xl font-bold`}>Patient</h1>
-          <button onClick={() => setOpen(!open)}>
-            {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-          </button>
-        </div>
-
-        <nav className="flex-1 mt-4">
-          {menuItems.map((item) => (
+    <aside
+      className={`bg-blue-700 text-white transition-all duration-300 ${
+        isOpen ? "w-64" : "w-20"
+      } flex flex-col justify-between`}
+    >
+      <div>
+        <div className="p-4 font-bold text-lg text-center">👨‍⚕️ Patient</div>
+        <nav className="mt-4 flex flex-col gap-2">
+          {links.map(({ name, href, icon: Icon }) => (
             <Link
-              href={item.path}
-              key={item.id}
-              className="flex items-center space-x-3 py-2 px-4 hover:bg-blue-600 rounded-lg mx-2 my-1 transition"
+              key={name}
+              href={href}
+              className={`flex items-center gap-3 p-3 mx-2 rounded-md transition-all ${
+                pathname === href
+                  ? "bg-blue-500"
+                  : "hover:bg-blue-600"
+              }`}
             >
-              {item.icon}
-              {open && <span>{item.name}</span>}
+              <Icon size={20} />
+              {isOpen && <span>{name}</span>}
             </Link>
           ))}
         </nav>
-
-        <div className="border-t border-blue-500 p-4">
-          <button className="flex items-center space-x-3 hover:bg-blue-600 rounded-lg px-4 py-2 w-full">
-            <LogOut className="w-5 h-5" />
-            {open && <span>Déconnexion</span>}
-          </button>
-        </div>
       </div>
-    </div>
-  )
+
+      <div className="p-4 border-t border-blue-500">
+        <button className="flex items-center gap-3 w-full p-3 rounded-md hover:bg-blue-600">
+          <LogOut size={20} />
+          {isOpen && <span>Déconnexion</span>}
+        </button>
+      </div>
+    </aside>
+  );
 }
