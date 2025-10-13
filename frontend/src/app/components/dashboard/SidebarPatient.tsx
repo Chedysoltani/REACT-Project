@@ -5,7 +5,6 @@ import { CalendarDays, FileText, CreditCard, ClipboardList, LogOut, Home } from 
 
 export default function SidebarPatient({
   isOpen,
-  setIsOpen,
 }: {
   isOpen: boolean;
   setIsOpen: (v: boolean) => void;
@@ -13,12 +12,12 @@ export default function SidebarPatient({
   const pathname = usePathname();
 
   const links = [
-    { name: "Dashboard", href: "/homepatient", icon: Home },
-    { name: "Historique", href: "/historique", icon: ClipboardList },
-    { name: "Prochains Rendez-vous", href: "/rendezvous", icon: CalendarDays },
-    { name: "Réservation", href: "/reservation", icon: FileText },
-    { name: "Paiement", href: "/paiement", icon: CreditCard },
-    { name: "Ordonnances", href: "/ordonnances", icon: FileText },
+    { name: "Dashboard", href: "/patient", icon: Home },
+    { name: "Historique", href: "/patient/historique", icon: ClipboardList },
+    { name: "Prochains Rendez-vous", href: "/patient/rendezvous", icon: CalendarDays },
+    { name: "Réservation", href: "/patient/reservation", icon: FileText },
+    { name: "Paiement", href: "/patient/paiement", icon: CreditCard },
+    { name: "Ordonnances", href: "/patient/ordonnances", icon: FileText },
   ];
 
   return (
