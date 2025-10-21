@@ -21,6 +21,7 @@ type AuthResponse = {
     id: number;
     name: string;
     email: string;
+    role: string;
   };
 };
 
@@ -32,7 +33,7 @@ export class AuthService {
   ) {}
 
   async register(createUserDto: CreateUserDto): Promise<AuthResponse> {
-    const { name, email, password } = createUserDto;
+    const { name, email, password, role } = createUserDto;
 
     // Vérifie si l'utilisateur existe déjà
     const existingUser = await this.usersService.findByEmail(email);
@@ -44,8 +45,13 @@ export class AuthService {
     const salt = await bcrypt.genSalt();
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    // Crée l'utilisateur avec le mot de passe haché
-    const user = await this.usersService.create(name, email, hashedPassword);
+    // Crée l'utilisateur avec le mot de passe haché et le rôle
+    const user = await this.usersService.create(
+      name,
+      email,
+      hashedPassword,
+      role,
+    );
 
     return this.generateAuthResponse(user);
   }
@@ -81,6 +87,7 @@ export class AuthService {
         id: user.id,
         name: user.name,
         email: user.email,
+        role: user.role,
       },
     };
   }

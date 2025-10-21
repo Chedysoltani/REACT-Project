@@ -4,7 +4,9 @@ import {
   MinLength,
   MaxLength,
   IsNotEmpty,
+  IsEnum,
 } from 'class-validator';
+import { UserRole } from '../user.entity';
 
 export class CreateUserDto {
   @IsString()
@@ -23,4 +25,10 @@ export class CreateUserDto {
     message: 'Le mot de passe doit contenir au moins 6 caractères',
   })
   password: string;
+
+  @IsEnum(UserRole, {
+    message: `Le rôle doit être l'un des suivants: ${Object.values(UserRole).join(', ')}`,
+  })
+  @IsNotEmpty({ message: 'Le rôle est requis' })
+  role: UserRole;
 }
