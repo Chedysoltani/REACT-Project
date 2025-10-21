@@ -1,35 +1,87 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  ConflictException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
-import { PrismaService } from '../../prisma/prisma.service';
-import { SignupDto, LoginDto } from './dto/auth.dto';
+import { UsersService } from '../users/users.service';
+import { CreateUserDto } from '../users/dto/create-user.dto';
+import { User } from '../users/user.entity';
+
+type JwtPayload = {
+  sub: number;
+  email: string;
+  name: string;
+};
+
+type AuthResponse = {
+  access_token: string;
+  user: {
+    id: number;
+    name: string;
+    email: string;
+  };
+};
 
 @Injectable()
 export class AuthService {
-  constructor(private prisma: PrismaService, private jwtService: JwtService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly jwtService: JwtService,
+  ) {}
 
-  async signup(dto: SignupDto) {
-    const hashedPassword = await bcrypt.hash(dto.password, 10);
-    const user = await this.prisma.user.create({
-      data: { ...dto, password: hashedPassword },
-    });
-    return this.signToken(user.id, user.email, user.role);
+  async register(createUserDto: CreateUserDto): Promise<AuthResponse> {
+    const { name, email, password } = createUserDto;
+
+    // Vérifie si l'utilisateur existe déjà
+    const existingUser = await this.usersService.findByEmail(email);
+    if (existingUser) {
+      throw new ConflictException('Un utilisateur avec cet email existe déjà');
+    }
+
+    // Hache le mot de passe
+    const salt = await bcrypt.genSalt();
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Crée l'utilisateur avec le mot de passe haché
+    const user = await this.usersService.create(name, email, hashedPassword);
+
+    return this.generateAuthResponse(user);
   }
 
-  async login(dto: LoginDto) {
-    const user = await this.prisma.user.findUnique({ where: { email: dto.email } });
-    if (!user) throw new UnauthorizedException('Email non trouvé');
+  async login(email: string, password: string): Promise<AuthResponse> {
+    // Cherche l'utilisateur
+    const user = await this.usersService.findByEmail(email);
+    if (!user) {
+      throw new UnauthorizedException('Email ou mot de passe incorrect');
+    }
 
-    const passwordMatches = await bcrypt.compare(dto.password, user.password);
-    if (!passwordMatches) throw new UnauthorizedException('Mot de passe incorrect');
+    // Vérifie le mot de passe
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Email ou mot de passe incorrect');
+    }
 
-    return this.signToken(user.id, user.email, user.role);
+    return this.generateAuthResponse(user);
   }
 
-  private async signToken(userId: number, email: string, role: string) {
-    const payload = { sub: userId, email, role };
+  private generateAuthResponse(user: User): AuthResponse {
+    const payload: JwtPayload = {
+      sub: user.id,
+      email: user.email,
+      name: user.name,
+    };
+
+    const token = this.jwtService.sign(payload);
+
     return {
-      access_token: await this.jwtService.signAsync(payload),
+      access_token: token,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+      },
     };
   }
 }
