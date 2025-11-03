@@ -1,35 +1,119 @@
 "use client"
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
+
+interface Medecin {
+  id: number
+  name: string   // correspond au champ "name" de ton service (nom du médecin)
+  price: number
+  duration: string
+}
 
 export default function Reservation() {
+  const [medecins, setMedecins] = useState<Medecin[]>([])
+  const [selectedMedecin, setSelectedMedecin] = useState<number | null>(null)
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [selectedTime, setSelectedTime] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
 
-  // Génération du mois actuel
+  // 🔹 Récupération des "services" (qui sont les médecins)
+  useEffect(() => {
+    const fetchMedecins = async () => {
+      try {
+        const token = typeof window !== "undefined" ? localStorage.getItem("token") : null
+        if (!token) {
+          setError("Token manquant. Veuillez vous reconnecter.")
+          setLoading(false)
+          return
+        }
+
+        const res = await fetch("http://localhost:5000/services", {
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+          },
+        })
+
+        if (!res.ok) throw new Error(`Erreur ${res.status}`)
+
+        const data: Medecin[] = await res.json()
+        setMedecins(data)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Erreur inconnue")
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchMedecins()
+  }, [])
+
+  // 🔹 Génération du calendrier
   const today = new Date()
   const year = today.getFullYear()
   const month = today.getMonth()
   const daysInMonth = new Date(year, month + 1, 0).getDate()
-
   const days = Array.from({ length: daysInMonth }, (_, i) => i + 1)
 
   const handleDateClick = (day: number) => {
-    const newDate = `${year}-${month + 1}-${day}`
+    const newDate = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`
     setSelectedDate(newDate)
     setSelectedTime(null)
   }
 
-  const handleReservation = () => {
+  // 🔹 Réservation (simulation)
+  const handleReservation = async () => {
+    if (!selectedMedecin) return alert("Veuillez choisir un médecin.")
     if (!selectedDate || !selectedTime) return alert("Veuillez choisir une date et une heure.")
-    alert(`✅ Rendez-vous réservé pour le ${selectedDate} à ${selectedTime}`)
+
+    const res = await fetch("http://localhost:5000/reservations", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${localStorage.getItem("token")}`,
+      },
+     body: JSON.stringify({
+  medecinId: selectedMedecin, // correspond au DTO
+  date: selectedDate,
+  heure: selectedTime,
+  // si le patientId est récupéré du token backend, inutile ici
+}),
+
+    })
+
+    if (res.ok) {
+      alert(`✅ Rendez-vous confirmé avec succès !`)
+      setSelectedMedecin(null)
+      setSelectedDate(null)
+      setSelectedTime(null)
+    } else {
+      const err = await res.text()
+      alert("Erreur : " + err)
+    }
   }
 
   return (
     <div className="p-6">
-      <h2 className="text-3xl font-semibold text-gray-800 mb-4">Réserver ou modifier un rendez-vous</h2>
-      <p className="text-gray-600 mb-6">
-        Choisissez une date dans le calendrier ci-dessous, puis sélectionnez une heure pour votre rendez-vous.
-      </p>
+      <h2 className="text-3xl font-semibold text-gray-800 mb-4">Réserver un rendez-vous</h2>
+
+      {/* 🔸 Sélection du médecin */}
+      <div className="bg-white p-6 rounded-2xl shadow-md w-full max-w-md mx-auto mb-6">
+        <h3 className="text-lg font-semibold mb-3 text-gray-700">Choisissez un médecin</h3>
+        {loading && <p>Chargement...</p>}
+        {error && <p className="text-red-600">{error}</p>}
+
+        <select
+  value={selectedMedecin ?? ""}
+  onChange={(e) => setSelectedMedecin(Number(e.target.value))}
+>
+  <option value="">-- Sélectionner un médecin --</option>
+  {medecins.map((m) => (
+    <option key={m.id} value={m.id}>
+      {m.name} — {m.duration}
+    </option>
+  ))}
+</select>
+      </div>
 
       {/* 📅 CALENDRIER */}
       <div className="bg-white p-6 rounded-2xl shadow-md w-full max-w-3xl mx-auto">

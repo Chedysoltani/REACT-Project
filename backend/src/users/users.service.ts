@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { User, UserRole } from './user.entity';
 
 @Injectable()
@@ -61,5 +61,17 @@ export class UsersService {
    */
   async findAll(): Promise<User[]> {
     return this.usersRepository.find();
+  }
+
+  /**
+   * Liste les utilisateurs par rôles (sélectionne uniquement les champs publics)
+   */
+  async findByRoles(
+    roles: UserRole[],
+  ): Promise<Array<Pick<User, 'id' | 'name' | 'email' | 'role'>>> {
+    return this.usersRepository.find({
+      select: { id: true, name: true, email: true, role: true },
+      where: { role: In(roles) },
+    });
   }
 }

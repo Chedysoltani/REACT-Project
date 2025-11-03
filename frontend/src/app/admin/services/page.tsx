@@ -1,118 +1,207 @@
 "use client"
-import React, { useState } from "react"
-import { Plus, Pencil, Trash2, X } from "lucide-react"
+import React, { useEffect, useState } from "react"
 
-type Service = {
+interface Service {
   id: number
   name: string
   price: number
   duration: string
 }
 
-export default function ServicesPage() {
-  const [services, setServices] = useState<Service[]>([
-    { id: 1, name: "Consultation Générale", price: 60, duration: "30 min" },
-    { id: 2, name: "Radiologie", price: 120, duration: "45 min" },
-  ])
+export default function ServicePage() {
+  const [services, setServices] = useState<Service[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
+  const [editing, setEditing] = useState<Service | null>(null)
+  const [showModal, setShowModal] = useState(false)
+  const [form, setForm] = useState({ name: "", price: "", duration: "" })
 
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [editingService, setEditingService] = useState<Service | null>(null)
-  const [formData, setFormData] = useState<Omit<Service, "id">>({
-    name: "",
-    price: 0,
-    duration: "",
-  })
+  // 🔹 Récupération des services au chargement
+  useEffect(() => {
+    const fetchServices = async () => {
+      try {
+        const token = typeof window !== "undefined" ? localStorage.getItem("token") : null
+        if (!token) {
+          setError("Token manquant. Veuillez vous reconnecter.")
+          setLoading(false)
+          return
+        }
 
-  const openModal = (service?: Service) => {
+        const res = await fetch("http://localhost:5000/services", {
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+          },
+        })
+
+        if (!res.ok) {
+          const text = await res.text()
+          throw new Error(text || `Erreur ${res.status}`)
+        }
+
+        const data: Service[] = await res.json()
+        setServices(data)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Erreur inconnue")
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchServices()
+  }, [])
+
+  // 🔹 Ouvrir / Fermer modale
+  const handleOpenModal = (service?: Service) => {
     if (service) {
-      setEditingService(service)
-      setFormData({
+      setEditing(service)
+      setForm({
         name: service.name,
-        price: service.price,
+        price: service.price.toString(),
         duration: service.duration,
       })
     } else {
-      setEditingService(null)
-      setFormData({ name: "", price: 0, duration: "" })
+      setEditing(null)
+      setForm({ name: "", price: "", duration: "" })
     }
-    setIsModalOpen(true)
+    setShowModal(true)
   }
 
-  const closeModal = () => setIsModalOpen(false)
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (editingService) {
-      setServices((prev) =>
-        prev.map((s) =>
-          s.id === editingService.id ? { ...s, ...formData } : s
-        )
-      )
-    } else {
-      setServices((prev) => [
-        ...prev,
-        { id: Date.now(), ...formData },
-      ])
-    }
-    closeModal()
+  const handleCloseModal = () => {
+    setShowModal(false)
+    setEditing(null)
   }
 
-  const handleDelete = (id: number) => {
-    if (confirm("Voulez-vous vraiment supprimer ce service ?")) {
-      setServices((prev) => prev.filter((s) => s.id !== id))
+  // 🔹 Ajouter ou modifier un service
+  const handleSave = async () => {
+    try {
+      const token = localStorage.getItem("token")
+      if (!token) {
+        alert("Token manquant.")
+        return
+      }
+
+      const method = editing ? "PUT" : "POST"
+      const url = editing
+        ? `http://localhost:5000/services/${editing.id}`
+        : "http://localhost:5000/services"
+
+      const res = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          name: form.name,
+          price: parseFloat(form.price),
+          duration: form.duration,
+        }),
+      })
+
+      if (!res.ok) {
+        const text = await res.text()
+        throw new Error(text || `Erreur ${res.status}`)
+      }
+
+      const data: Service = await res.json()
+
+      if (editing) {
+        setServices(services.map((s) => (s.id === editing.id ? data : s)))
+      } else {
+        setServices([...services, data])
+      }
+
+      handleCloseModal()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur inconnue")
+    }
+  }
+
+  // 🔹 Supprimer un service
+  const handleDelete = async (id: number) => {
+    try {
+      const token = localStorage.getItem("token")
+      if (!token) {
+        alert("Token manquant.")
+        return
+      }
+
+      const res = await fetch(`http://localhost:5000/services/${id}`, {
+        method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+        },
+      })
+
+      if (!res.ok) {
+        const text = await res.text()
+        throw new Error(text || `Erreur ${res.status}`)
+      }
+
+      setServices(services.filter((s) => s.id !== id))
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur inconnue")
     }
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-semibold text-gray-800">Configuration des Services</h1>
+    <div className="p-6">
+      <h1 className="text-3xl font-bold mb-6 text-gray-800">Gestion des Services</h1>
+      <p className="text-gray-600 mb-8">
+        Gérez les services proposés par la clinique : ajout, modification ou suppression.
+      </p>
+
+      {loading && <div className="text-gray-600 mb-4">Chargement...</div>}
+      {error && <div className="text-red-600 mb-4">{error}</div>}
+
+      <div className="mb-6">
         <button
-          onClick={() => openModal()}
-          className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-xl shadow hover:bg-indigo-700 transition"
+          onClick={() => handleOpenModal()}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg transition-all shadow-md"
         >
-          <Plus size={18} /> Ajouter
+          + Ajouter un service
         </button>
       </div>
 
+      {/* Tableau */}
       <div className="bg-white rounded-2xl shadow-md p-6">
+        <h2 className="text-lg font-semibold mb-4 text-gray-700">Liste des Services</h2>
         <table className="w-full border-collapse">
           <thead>
-            <tr className="text-left text-gray-600 border-b">
-              <th className="pb-3">Nom du service</th>
-              <th className="pb-3">Tarif (DT)</th>
-              <th className="pb-3">Durée</th>
-              <th className="pb-3 text-center">Actions</th>
+            <tr className="bg-gray-100 text-left text-gray-700">
+              <th className="p-3">Nom</th>
+              <th className="p-3">Prix</th>
+              <th className="p-3">Durée</th>
+              <th className="p-3 text-center">Actions</th>
             </tr>
           </thead>
           <tbody>
-            {services.map((service) => (
-              <tr key={service.id} className="border-b hover:bg-gray-50 transition">
-                <td className="py-3">{service.name}</td>
-                <td>{service.price}</td>
-                <td>{service.duration}</td>
-                <td className="text-center space-x-3">
+            {services.map((s) => (
+              <tr key={s.id} className="border-t hover:bg-gray-50 transition">
+                <td className="p-3">{s.name}</td>
+                <td className="p-3">{s.price} TND</td>
+                <td className="p-3">{s.duration}</td>
+                <td className="p-3 flex justify-center gap-3">
                   <button
-                    onClick={() => openModal(service)}
-                    className="text-indigo-600 hover:text-indigo-800 transition"
-                    title="Modifier"
+                    onClick={() => handleOpenModal(s)}
+                    className="bg-yellow-400 hover:bg-yellow-500 text-white px-3 py-1 rounded-lg"
                   >
-                    <Pencil size={18} />
+                    Modifier
                   </button>
                   <button
-                    onClick={() => handleDelete(service.id)}
-                    className="text-red-500 hover:text-red-700 transition"
-                    title="Supprimer"
+                    onClick={() => handleDelete(s.id)}
+                    className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-lg"
                   >
-                    <Trash2 size={18} />
+                    Supprimer
                   </button>
                 </td>
               </tr>
             ))}
-            {services.length === 0 && (
+            {services.length === 0 && !loading && (
               <tr>
-                <td colSpan={4} className="text-center py-6 text-gray-500 italic">
-                  Aucun service configuré.
+                <td colSpan={4} className="text-center p-4 text-gray-500">
+                  Aucun service pour le moment.
                 </td>
               </tr>
             )}
@@ -120,72 +209,52 @@ export default function ServicesPage() {
         </table>
       </div>
 
-      {/* MODAL AJOUT / MODIF */}
-      {isModalOpen && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 relative animate-fadeIn">
-            <button
-              onClick={closeModal}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
-            >
-              <X size={22} />
-            </button>
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">
-              {editingService ? "Modifier le Service" : "Ajouter un Service"}
+      {/* MODAL */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-lg relative">
+            <h2 className="text-xl font-semibold mb-4 text-gray-800">
+              {editing ? "Modifier un service" : "Ajouter un service"}
             </h2>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-gray-600 mb-1">Nom du service</label>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full border rounded-xl px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-gray-600 mb-1">Tarif (DT)</label>
-                <input
-                  type="number"
-                  min="0"
-                  value={formData.price}
-                  onChange={(e) =>
-                    setFormData({ ...formData, price: Number(e.target.value) })
-                  }
-                  className="w-full border rounded-xl px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-gray-600 mb-1">Durée</label>
-                <input
-                  type="text"
-                  placeholder="Ex: 30 min"
-                  value={formData.duration}
-                  onChange={(e) =>
-                    setFormData({ ...formData, duration: e.target.value })
-                  }
-                  className="w-full border rounded-xl px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none"
-                  required
-                />
-              </div>
-              <div className="flex justify-end gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={closeModal}
-                  className="px-4 py-2 rounded-xl border border-gray-300 hover:bg-gray-100 transition"
-                >
-                  Annuler
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 transition"
-                >
-                  {editingService ? "Modifier" : "Ajouter"}
-                </button>
-              </div>
-            </form>
+
+            <div className="grid grid-cols-1 gap-4">
+              <input
+                type="text"
+                placeholder="Nom du service"
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                className="p-2 border rounded-lg focus:ring-2 focus:ring-blue-400"
+              />
+              <input
+                type="number"
+                placeholder="Prix"
+                value={form.price}
+                onChange={(e) => setForm({ ...form, price: e.target.value })}
+                className="p-2 border rounded-lg focus:ring-2 focus:ring-blue-400"
+              />
+              <input
+                type="text"
+                placeholder="Durée (ex: 30min)"
+                value={form.duration}
+                onChange={(e) => setForm({ ...form, duration: e.target.value })}
+                className="p-2 border rounded-lg focus:ring-2 focus:ring-blue-400"
+              />
+            </div>
+
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                onClick={handleCloseModal}
+                className="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-lg"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={handleSave}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg"
+              >
+                {editing ? "Mettre à jour" : "Ajouter"}
+              </button>
+            </div>
           </div>
         </div>
       )}

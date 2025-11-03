@@ -1,23 +1,64 @@
 "use client"
-import React, { useState } from "react"
+import React, { useEffect, useState } from "react"
 
 interface Staff {
   id: number
   name: string
   role: string
   email: string
-  phone: string
+  phone?: string
 }
 
 export default function StaffPage() {
-  const [staffList, setStaffList] = useState<Staff[]>([
-    { id: 1, name: "Dr. Karim Messaoud", role: "Médecin", email: "karim@medflex.tn", phone: "+216 22 334 556" },
-    { id: 2, name: "Nadia Ben Ali", role: "Réceptionniste", email: "nadia@medflex.tn", phone: "+216 21 123 987" },
-  ])
+  const [staffList, setStaffList] = useState<Staff[]>([])
+  const [loading, setLoading] = useState<boolean>(true)
+  const [error, setError] = useState<string>("")
+
+  useEffect(() => {
+    const fetchStaff = async () => {
+      try {
+        const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
+        if (!token) {
+          setError("Token manquant. Veuillez vous reconnecter.")
+          setLoading(false)
+          return
+        }
+        const res = await fetch("http://localhost:5000/users/staff", {
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+          },
+        })
+        if (!res.ok) {
+          const text = await res.text()
+          throw new Error(text || `Erreur ${res.status}`)
+        }
+        const data: Array<{ id: number; name: string; email: string; role: 'doctor' | 'receptionist' }> = await res.json()
+        const mapped: Staff[] = data.map((u) => ({
+          id: u.id,
+          name: u.name,
+          email: u.email,
+          role: u.role,
+        }))
+        setStaffList(mapped)
+      } catch (e: unknown) {
+        setError(e instanceof Error ? e.message : "Erreur inconnue")
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchStaff()
+  }, [])
 
   const [editing, setEditing] = useState<Staff | null>(null)
   const [showModal, setShowModal] = useState(false)
   const [form, setForm] = useState({ name: "", role: "", email: "", phone: "" })
+
+  const displayRole = (role: string) => {
+    if (role === 'doctor') return 'Médecin'
+    if (role === 'receptionist') return 'Réceptionniste'
+    return role
+  }
 
   const handleOpenModal = (staff?: Staff) => {
     if (staff) {
@@ -26,7 +67,7 @@ export default function StaffPage() {
         name: staff.name,
         role: staff.role,
         email: staff.email,
-        phone: staff.phone,
+        phone: staff.phone || "",
       })
     } else {
       setEditing(null)
@@ -61,6 +102,13 @@ export default function StaffPage() {
         Ajoutez, modifiez ou supprimez les membres du staff de la clinique.
       </p>
 
+      {loading && (
+        <div className="mb-4 text-gray-600">Chargement...</div>
+      )}
+      {error && (
+        <div className="mb-4 text-red-600">{error}</div>
+      )}
+
       {/* Bouton Ajouter */}
       <div className="mb-6">
         <button
@@ -88,9 +136,9 @@ export default function StaffPage() {
             {staffList.map((staff) => (
               <tr key={staff.id} className="border-t hover:bg-gray-50 transition">
                 <td className="p-3">{staff.name}</td>
-                <td className="p-3">{staff.role}</td>
+                <td className="p-3">{displayRole(staff.role)}</td>
                 <td className="p-3">{staff.email}</td>
-                <td className="p-3">{staff.phone}</td>
+                <td className="p-3">{staff.phone || ''}</td>
                 <td className="p-3 flex justify-center gap-3">
                   <button
                     onClick={() => handleOpenModal(staff)}
@@ -110,7 +158,7 @@ export default function StaffPage() {
             {staffList.length === 0 && (
               <tr>
                 <td colSpan={5} className="text-center p-4 text-gray-500">
-                  Aucun membre du staff pour le moment.
+                  {loading ? ' ' : 'Aucun membre du staff pour le moment.'}
                 </td>
               </tr>
             )}

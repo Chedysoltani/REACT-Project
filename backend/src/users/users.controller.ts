@@ -1,6 +1,7 @@
 import { Controller, Get, UseGuards, Req } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { UserRole } from './user.entity';
 
 @Controller('users')
 export class UsersController {
@@ -16,5 +17,11 @@ export class UsersController {
   @Get()
   findAll() {
     return this.usersService.findAll();
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('staff')
+  findStaff() {
+    return this.usersService.findByRoles([UserRole.DOCTOR, UserRole.RECEPTIONIST]);
   }
 }
