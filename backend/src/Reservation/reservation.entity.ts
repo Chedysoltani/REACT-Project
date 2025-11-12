@@ -1,6 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, ManyToOne, CreateDateColumn } from 'typeorm';
 import { User } from 'src/users/user.entity';
-import { Service } from 'src/services/service.entity';
+import { Doctor } from 'src/services/doctor.entity'; // ✅ corrige ici
 
 @Entity('reservations')
 export class Reservation {
@@ -10,10 +10,9 @@ export class Reservation {
   @ManyToOne(() => User, { eager: true })
   patient: User;
 
-  @ManyToOne(() => Service, { eager: true })
-  medecin: Service;
+  @ManyToOne(() => Doctor, { eager: true }) // ✅ changer Service -> Doctor
+  medecin: Doctor;
 
   @CreateDateColumn()
   dateReservation: Date;
-  
 }

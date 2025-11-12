@@ -6,6 +6,7 @@ interface Medecin {
   name: string   // correspond au champ "name" de ton service (nom du médecin)
   price: number
   duration: string
+  specialty:string
 }
 
 export default function Reservation() {
@@ -17,36 +18,37 @@ export default function Reservation() {
   const [error, setError] = useState("")
 
   // 🔹 Récupération des "services" (qui sont les médecins)
-  useEffect(() => {
-    const fetchMedecins = async () => {
-      try {
-        const token = typeof window !== "undefined" ? localStorage.getItem("token") : null
-        if (!token) {
-          setError("Token manquant. Veuillez vous reconnecter.")
-          setLoading(false)
-          return
-        }
-
-        const res = await fetch("http://localhost:5000/services", {
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`,
-          },
-        })
-
-        if (!res.ok) throw new Error(`Erreur ${res.status}`)
-
-        const data: Medecin[] = await res.json()
-        setMedecins(data)
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Erreur inconnue")
-      } finally {
+useEffect(() => {
+  const fetchMedecins = async () => {
+    try {
+      const token = typeof window !== "undefined" ? localStorage.getItem("token") : null
+      if (!token) {
+        setError("Token manquant. Veuillez vous reconnecter.")
         setLoading(false)
+        return
       }
-    }
 
-    fetchMedecins()
-  }, [])
+      const res = await fetch("http://localhost:5000/doctors", { // <-- changer /services en /doctors
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+      })
+
+      if (!res.ok) throw new Error(`Erreur ${res.status}`)
+
+      const data: Medecin[] = await res.json()
+      setMedecins(data)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur inconnue")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  fetchMedecins()
+}, [])
+
 
   // 🔹 Génération du calendrier
   const today = new Date()
@@ -102,17 +104,18 @@ export default function Reservation() {
         {loading && <p>Chargement...</p>}
         {error && <p className="text-red-600">{error}</p>}
 
-        <select
+       <select
   value={selectedMedecin ?? ""}
   onChange={(e) => setSelectedMedecin(Number(e.target.value))}
 >
   <option value="">-- Sélectionner un médecin --</option>
-  {medecins.map((m) => (
-    <option key={m.id} value={m.id}>
-      {m.name} — {m.duration}
+  {medecins.map((med) => (
+    <option key={med.id} value={med.id}>
+      {med.name} ({med.specialty})
     </option>
   ))}
 </select>
+
       </div>
 
       {/* 📅 CALENDRIER */}

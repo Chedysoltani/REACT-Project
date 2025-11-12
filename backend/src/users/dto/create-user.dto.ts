@@ -1,34 +1,16 @@
-import {
-  IsString,
-  IsEmail,
-  MinLength,
-  MaxLength,
-  IsNotEmpty,
-  IsEnum,
-} from 'class-validator';
-import { UserRole } from '../user.entity';
+import { IsEmail, IsNotEmpty, MinLength } from 'class-validator';
 
 export class CreateUserDto {
-  @IsString()
-  @IsNotEmpty({ message: 'Le nom est requis' })
-  @MinLength(2, { message: 'Le nom doit contenir au moins 2 caractères' })
-  @MaxLength(50, { message: 'Le nom ne peut pas dépasser 50 caractères' })
+  @IsNotEmpty()
   name: string;
 
-  @IsEmail({}, { message: 'Veuillez fournir une adresse email valide' })
-  @IsNotEmpty({ message: "L'email est requis" })
+  @IsEmail()
   email: string;
 
-  @IsString()
-  @IsNotEmpty({ message: 'Le mot de passe est requis' })
-  @MinLength(6, {
-    message: 'Le mot de passe doit contenir au moins 6 caractères',
-  })
+  @IsNotEmpty()
+  @MinLength(6)
   password: string;
 
-  @IsEnum(UserRole, {
-    message: `Le rôle doit être l'un des suivants: ${Object.values(UserRole).join(', ')}`,
-  })
-  @IsNotEmpty({ message: 'Le rôle est requis' })
-  role: UserRole;
+  // ⚡ Supprime complètement le champ role
+  // role?: string;  // plus besoin
 }

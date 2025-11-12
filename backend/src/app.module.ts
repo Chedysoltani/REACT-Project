@@ -6,8 +6,8 @@ import { AuthModule } from './auth/auth.module';
 import { User } from './users/user.entity';
 import { AppController } from './app.controller';
 import { AuthController } from './auth/auth.controller';
-import { Service } from './services/service.entity';
-import { ServicesModule } from './services/services.module';
+import { Doctor } from './services/doctor.entity';
+import { DoctorsModule } from './services/doctors.module';
 import { ReservationsModule } from './Reservation/reservations.module';
 import { Reservation } from './Reservation/reservation.entity';
 
@@ -27,7 +27,7 @@ import { Reservation } from './Reservation/reservation.entity';
         username: configService.get<string>('DB_USERNAME', 'postgres'),
         password: configService.get<string>('DB_PASSWORD', 'postgres'),
         database: configService.get<string>('DB_DATABASE', 'nest_auth'),
-        entities: [User, Service,Reservation],
+        entities: [User, Doctor,Reservation],
         synchronize:
           configService.get<string>('NODE_ENV', 'development') !== 'production',
         logging:
@@ -36,7 +36,7 @@ import { Reservation } from './Reservation/reservation.entity';
     }),
     UsersModule,
     AuthModule,
-    ServicesModule,
+    DoctorsModule,
     ReservationsModule,
   ],
   controllers: [AppController, AuthController],

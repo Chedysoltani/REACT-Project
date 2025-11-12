@@ -1,24 +1,24 @@
 "use client"
 import React, { useEffect, useState } from "react"
 
-interface Service {
+interface Doctor {
   id: number
   name: string
-  price: number
-  duration: string
+  specialty: string
+  email: string
 }
 
-export default function ServicePage() {
-  const [services, setServices] = useState<Service[]>([])
+export default function DoctorsPage() {
+  const [doctors, setDoctors] = useState<Doctor[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
-  const [editing, setEditing] = useState<Service | null>(null)
+  const [editing, setEditing] = useState<Doctor | null>(null)
   const [showModal, setShowModal] = useState(false)
-  const [form, setForm] = useState({ name: "", price: "", duration: "" })
+  const [form, setForm] = useState({ name: "", specialty: "", email: "", password: "" })
 
-  // 🔹 Récupération des services au chargement
+  // 🔹 Récupération des médecins
   useEffect(() => {
-    const fetchServices = async () => {
+    const fetchDoctors = async () => {
       try {
         const token = typeof window !== "undefined" ? localStorage.getItem("token") : null
         if (!token) {
@@ -27,7 +27,7 @@ export default function ServicePage() {
           return
         }
 
-        const res = await fetch("http://localhost:5000/services", {
+        const res = await fetch("http://localhost:5000/doctors", {
           headers: {
             "Content-Type": "application/json",
             "Authorization": `Bearer ${token}`,
@@ -39,8 +39,8 @@ export default function ServicePage() {
           throw new Error(text || `Erreur ${res.status}`)
         }
 
-        const data: Service[] = await res.json()
-        setServices(data)
+        const data: Doctor[] = await res.json()
+        setDoctors(data)
       } catch (err) {
         setError(err instanceof Error ? err.message : "Erreur inconnue")
       } finally {
@@ -48,21 +48,22 @@ export default function ServicePage() {
       }
     }
 
-    fetchServices()
+    fetchDoctors()
   }, [])
 
   // 🔹 Ouvrir / Fermer modale
-  const handleOpenModal = (service?: Service) => {
-    if (service) {
-      setEditing(service)
+  const handleOpenModal = (doctor?: Doctor) => {
+    if (doctor) {
+      setEditing(doctor)
       setForm({
-        name: service.name,
-        price: service.price.toString(),
-        duration: service.duration,
+        name: doctor.name,
+        specialty: doctor.specialty,
+        email: doctor.email,
+        password: "", // on ne montre pas le mot de passe existant
       })
     } else {
       setEditing(null)
-      setForm({ name: "", price: "", duration: "" })
+      setForm({ name: "", specialty: "", email: "", password: "" })
     }
     setShowModal(true)
   }
@@ -72,7 +73,7 @@ export default function ServicePage() {
     setEditing(null)
   }
 
-  // 🔹 Ajouter ou modifier un service
+  // 🔹 Ajouter ou modifier un médecin
   const handleSave = async () => {
     try {
       const token = localStorage.getItem("token")
@@ -81,10 +82,21 @@ export default function ServicePage() {
         return
       }
 
-      const method = editing ? "PUT" : "POST"
+      const method = editing ? "PATCH" : "POST"
       const url = editing
-        ? `http://localhost:5000/services/${editing.id}`
-        : "http://localhost:5000/services"
+        ? `http://localhost:5000/doctors/${editing.id}`
+        : "http://localhost:5000/doctors"
+
+      const bodyData: any = {
+        name: form.name,
+        specialty: form.specialty,
+        email: form.email,
+      }
+
+      // 🔹 Inclure le mot de passe uniquement pour la création ou si modifié
+      if (!editing || form.password) {
+        bodyData.password = form.password
+      }
 
       const res = await fetch(url, {
         method,
@@ -92,11 +104,7 @@ export default function ServicePage() {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          name: form.name,
-          price: parseFloat(form.price),
-          duration: form.duration,
-        }),
+        body: JSON.stringify(bodyData),
       })
 
       if (!res.ok) {
@@ -104,12 +112,12 @@ export default function ServicePage() {
         throw new Error(text || `Erreur ${res.status}`)
       }
 
-      const data: Service = await res.json()
+      const data: Doctor = await res.json()
 
       if (editing) {
-        setServices(services.map((s) => (s.id === editing.id ? data : s)))
+        setDoctors(doctors.map((d) => (d.id === editing.id ? data : d)))
       } else {
-        setServices([...services, data])
+        setDoctors([...doctors, data])
       }
 
       handleCloseModal()
@@ -118,7 +126,7 @@ export default function ServicePage() {
     }
   }
 
-  // 🔹 Supprimer un service
+  // 🔹 Supprimer un médecin
   const handleDelete = async (id: number) => {
     try {
       const token = localStorage.getItem("token")
@@ -127,11 +135,9 @@ export default function ServicePage() {
         return
       }
 
-      const res = await fetch(`http://localhost:5000/services/${id}`, {
+      const res = await fetch(`http://localhost:5000/doctors/${id}`, {
         method: "DELETE",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-        },
+        headers: { "Authorization": `Bearer ${token}` },
       })
 
       if (!res.ok) {
@@ -139,7 +145,7 @@ export default function ServicePage() {
         throw new Error(text || `Erreur ${res.status}`)
       }
 
-      setServices(services.filter((s) => s.id !== id))
+      setDoctors(doctors.filter((d) => d.id !== id))
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur inconnue")
     }
@@ -147,9 +153,9 @@ export default function ServicePage() {
 
   return (
     <div className="p-6">
-      <h1 className="text-3xl font-bold mb-6 text-gray-800">Gestion des Services</h1>
+      <h1 className="text-3xl font-bold mb-6 text-gray-800">Gestion des Médecins</h1>
       <p className="text-gray-600 mb-8">
-        Gérez les services proposés par la clinique : ajout, modification ou suppression.
+        Gérez les médecins et leurs informations : ajout, modification ou suppression.
       </p>
 
       {loading && <div className="text-gray-600 mb-4">Chargement...</div>}
@@ -160,37 +166,37 @@ export default function ServicePage() {
           onClick={() => handleOpenModal()}
           className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg transition-all shadow-md"
         >
-          + Ajouter un service
+          + Ajouter un médecin
         </button>
       </div>
 
       {/* Tableau */}
       <div className="bg-white rounded-2xl shadow-md p-6">
-        <h2 className="text-lg font-semibold mb-4 text-gray-700">Liste des Services</h2>
+        <h2 className="text-lg font-semibold mb-4 text-gray-700">Liste des Médecins</h2>
         <table className="w-full border-collapse">
           <thead>
             <tr className="bg-gray-100 text-left text-gray-700">
               <th className="p-3">Nom</th>
-              <th className="p-3">Prix</th>
-              <th className="p-3">Durée</th>
+              <th className="p-3">Spécialité</th>
+              <th className="p-3">Email</th>
               <th className="p-3 text-center">Actions</th>
             </tr>
           </thead>
           <tbody>
-            {services.map((s) => (
-              <tr key={s.id} className="border-t hover:bg-gray-50 transition">
-                <td className="p-3">{s.name}</td>
-                <td className="p-3">{s.price} TND</td>
-                <td className="p-3">{s.duration}</td>
+            {doctors.map((d) => (
+              <tr key={d.id} className="border-t hover:bg-gray-50 transition">
+                <td className="p-3">{d.name}</td>
+                <td className="p-3">{d.specialty}</td>
+                <td className="p-3">{d.email}</td>
                 <td className="p-3 flex justify-center gap-3">
                   <button
-                    onClick={() => handleOpenModal(s)}
+                    onClick={() => handleOpenModal(d)}
                     className="bg-yellow-400 hover:bg-yellow-500 text-white px-3 py-1 rounded-lg"
                   >
                     Modifier
                   </button>
                   <button
-                    onClick={() => handleDelete(s.id)}
+                    onClick={() => handleDelete(d.id)}
                     className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-lg"
                   >
                     Supprimer
@@ -198,10 +204,10 @@ export default function ServicePage() {
                 </td>
               </tr>
             ))}
-            {services.length === 0 && !loading && (
+            {doctors.length === 0 && !loading && (
               <tr>
                 <td colSpan={4} className="text-center p-4 text-gray-500">
-                  Aucun service pour le moment.
+                  Aucun médecin pour le moment.
                 </td>
               </tr>
             )}
@@ -214,29 +220,36 @@ export default function ServicePage() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-lg relative">
             <h2 className="text-xl font-semibold mb-4 text-gray-800">
-              {editing ? "Modifier un service" : "Ajouter un service"}
+              {editing ? "Modifier un médecin" : "Ajouter un médecin"}
             </h2>
 
             <div className="grid grid-cols-1 gap-4">
               <input
                 type="text"
-                placeholder="Nom du service"
+                placeholder="Nom du médecin"
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
                 className="p-2 border rounded-lg focus:ring-2 focus:ring-blue-400"
               />
               <input
-                type="number"
-                placeholder="Prix"
-                value={form.price}
-                onChange={(e) => setForm({ ...form, price: e.target.value })}
+                type="text"
+                placeholder="Spécialité (ex: Cardiologie)"
+                value={form.specialty}
+                onChange={(e) => setForm({ ...form, specialty: e.target.value })}
                 className="p-2 border rounded-lg focus:ring-2 focus:ring-blue-400"
               />
               <input
-                type="text"
-                placeholder="Durée (ex: 30min)"
-                value={form.duration}
-                onChange={(e) => setForm({ ...form, duration: e.target.value })}
+                type="email"
+                placeholder="Email"
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                className="p-2 border rounded-lg focus:ring-2 focus:ring-blue-400"
+              />
+              <input
+                type="password"
+                placeholder="Mot de passe"
+                value={form.password}
+                onChange={(e) => setForm({ ...form, password: e.target.value })}
                 className="p-2 border rounded-lg focus:ring-2 focus:ring-blue-400"
               />
             </div>

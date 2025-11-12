@@ -1,2 +1,16 @@
-import { CreateUserDto } from '../../users/dto/create-user.dto';
-export class RegisterDto extends CreateUserDto {}
+import { IsEmail, IsNotEmpty, MinLength } from 'class-validator';
+
+export class CreateUserDto {
+  @IsNotEmpty()
+  name: string;
+
+  @IsEmail()
+  email: string;
+
+  @IsNotEmpty()
+  @MinLength(6)
+  password: string;
+
+  // ⚡ Supprime complètement le champ role
+  // role?: string;  // plus besoin
+}
