@@ -9,6 +9,7 @@ interface FormData {
   email: string;
   password: string;
   confirmPassword: string;
+  role: 'patient' | 'doctor' | 'receptionist' | 'admin';
 }
 
 export default function RegisterPage() {
@@ -19,9 +20,10 @@ export default function RegisterPage() {
     email: '',
     password: '',
     confirmPassword: '',
+    role: 'patient',
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -40,7 +42,7 @@ export default function RegisterPage() {
     setIsLoading(true);
     
     try {
-      const response = await fetch('http://localhost:5000/auth/register', {
+      const response = await fetch('http://localhost:3002/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -49,6 +51,7 @@ export default function RegisterPage() {
           name: formData.name,
           email: formData.email,
           password: formData.password,
+          role: formData.role,
         }),
       });
 
@@ -191,11 +194,47 @@ export default function RegisterPage() {
                 </div>
               </motion.div>
 
-              {/* Confirmation mot de passe */}
+              {/* Rôle */}
               <motion.div
                 initial={{ x: -20, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 transition={{ delay: 0.25, duration: 0.5 }}
+                className="space-y-1"
+              >
+                <label className="block text-sm font-medium text-gray-700">
+                  Rôle <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                  </div>
+                  <select
+                    name="role"
+                    value={formData.role}
+                    onChange={handleChange}
+                    required
+                    className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg bg-white/50 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 appearance-none"
+                  >
+                    <option value="patient">Patient</option>
+                    <option value="doctor">Médecin</option>
+                    <option value="receptionist">Réceptionniste</option>
+                    <option value="admin">Administrateur</option>
+                  </select>
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                    <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* Confirmation mot de passe */}
+              <motion.div
+                initial={{ x: -20, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ delay: 0.3, duration: 0.5 }}
                 className="space-y-1"
               >
                 <label className="block text-sm font-medium text-gray-700">

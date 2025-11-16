@@ -1,4 +1,5 @@
-import { IsEmail, IsNotEmpty, MinLength } from 'class-validator';
+import { IsEmail, IsEnum, IsNotEmpty, MinLength } from 'class-validator';
+import { UserRole } from '../user.entity';
 
 export class CreateUserDto {
   @IsNotEmpty()
@@ -11,6 +12,6 @@ export class CreateUserDto {
   @MinLength(6)
   password: string;
 
-  // ⚡ Supprime complètement le champ role
-  // role?: string;  // plus besoin
+  @IsEnum(UserRole, { message: 'Rôle invalide' })
+  role: UserRole;
 }

@@ -1,4 +1,5 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
+import { Clinic } from '../clinics/entities/clinic.entity';
 
 export enum UserRole {
   PATIENT = 'patient',
@@ -33,6 +34,13 @@ export class User {
 
   @UpdateDateColumn({ type: 'timestamp' })
   updatedAt: Date;
+
+  @ManyToOne('Clinic', 'staff', { nullable: true })
+  @JoinColumn({ name: 'clinicId' })
+  clinic: Clinic;
+
+  @Column({ nullable: true })
+  clinicId: number;
 
   constructor(partial?: Partial<User>) {
     if (partial) {

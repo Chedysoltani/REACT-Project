@@ -17,7 +17,7 @@ export class AuthService {
   constructor(private readonly usersService: UsersService, private readonly jwtService: JwtService) {}
 
   async register(createUserDto: CreateUserDto): Promise<AuthResponse> {
-    const { name, email, password } = createUserDto;
+    const { name, email, password, role } = createUserDto;
 
     const existingUser = await this.usersService.findByEmail(email);
     if (existingUser) throw new ConflictException('Un utilisateur avec cet email existe déjà');
@@ -28,7 +28,7 @@ export class AuthService {
       name,
       email,
       hashedPassword,
-      UserRole.PATIENT, // ⚡ rôle forcé à patient
+      role, // Utilisation du rôle fourni dans le formulaire
     );
 
     return this.generateAuthResponse(user);

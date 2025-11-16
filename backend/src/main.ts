@@ -7,15 +7,15 @@ async function bootstrap() {
 
   // Configuration CORS
   app.enableCors({
-    origin: 'http://localhost:3000',
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    origin: ['http://localhost:3000', 'http://localhost:3003', 'http://localhost:3002'],
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
     allowedHeaders: 'Content-Type, Accept, Authorization',
   });
 
   app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
 
-  const port = process.env.PORT || 5000;
+  const port = process.env.PORT || 3002;
 
   try {
     await app.listen(port, '0.0.0.0');
