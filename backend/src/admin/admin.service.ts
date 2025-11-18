@@ -49,4 +49,11 @@ export class AdminService {
       relations: ['staff'],
     });
   }
+
+  async getAllClinics() {
+    return this.clinicsRepository.find({
+      relations: ['staff', 'doctors', 'patients'],
+      order: { name: 'ASC' }
+    });
+  }
 }

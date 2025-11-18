@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindOptionsWhere } from 'typeorm';
 import { Clinic } from './entities/clinic.entity';
 import { CreateClinicDto } from './dto/create-clinic.dto';
-import { User } from '../users/user.entity';
+import { User, UserRole } from '../users/user.entity';
 
 @Injectable()
 export class ClinicsService {
@@ -27,9 +27,16 @@ export class ClinicsService {
   }
 
   async findAll(): Promise<Clinic[]> {
-    return this.clinicsRepository.find({
-      relations: ['staff'],
-    });
+    try {
+      return await this.clinicsRepository.find({
+        relations: ['staff'],
+        select: ['id', 'name', 'address', 'phone', 'email', 'createdAt', 'updatedAt'],
+        order: { name: 'ASC' }
+      });
+    } catch (error) {
+      console.error('Error in ClinicsService.findAll:', error);
+      throw new Error('Failed to retrieve clinics');
+    }
   }
 
   async findOne(id: string): Promise<Clinic> {
@@ -43,6 +50,49 @@ export class ClinicsService {
     }
     
     return clinic;
+  }
+
+  async update(id: string, updateClinicDto: Partial<CreateClinicDto>): Promise<Clinic> {
+    const clinic = await this.findOne(id);
+    if (!clinic) {
+      throw new NotFoundException(`Clinic with ID ${id} not found`);
+    }
+
+    // Mise à jour des champs fournis
+    Object.assign(clinic, updateClinicDto);
+    
+    return this.clinicsRepository.save(clinic);
+  }
+
+  async remove(id: string): Promise<void> {
+    const result = await this.clinicsRepository.delete(id);
+    if (result.affected === 0) {
+      throw new NotFoundException(`Clinic with ID ${id} not found`);
+    }
+  }
+
+  async getDoctors(clinicId: string): Promise<User[]> {
+    const clinic = await this.findOne(clinicId);
+    
+    // Récupérer uniquement les utilisateurs avec le rôle 'doctor' pour cette clinique
+    const doctors = await this.usersRepository.find({
+      where: {
+        clinicId: clinic.id as unknown as number,
+        role: UserRole.DOCTOR
+      },
+      select: ['id', 'name', 'email', 'role', 'createdAt']
+    });
+    
+    return doctors;
+  }
+
+  async findByUserId(userId: number): Promise<Clinic | null> {
+    const user = await this.usersRepository.findOne({
+      where: { id: userId },
+      relations: ['clinic']
+    });
+    
+    return user?.clinic || null;
   }
 
   async addStaff(clinicId: string, userId: number): Promise<Clinic> {

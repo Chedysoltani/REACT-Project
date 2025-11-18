@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
+import { API_ENDPOINTS } from '@/config/api';
 
 interface LoginFormData {
   email: string;
@@ -30,7 +31,7 @@ export default function LoginPage() {
     setIsLoading(true);
     
     try {
-      const response = await fetch('http://localhost:3002/auth/login', {
+      const response = await fetch(API_ENDPOINTS.AUTH.LOGIN, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

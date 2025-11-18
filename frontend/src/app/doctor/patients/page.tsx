@@ -1,5 +1,6 @@
 "use client"
 import React, { useState, useEffect } from "react"
+import { API_ENDPOINTS } from "@/config/api"
 
 interface Patient {
   id: number;
@@ -21,7 +22,7 @@ export default function PatientsPage() {
         const token = localStorage.getItem("token");
         if (!token) throw new Error("Token manquant");
 
-        const res = await fetch("http://localhost:5000/reservations/me/medecin", {
+        const res = await fetch(`${API_ENDPOINTS.APPOINTMENTS.BASE}/me/medecin`, {
           headers: {
             "Content-Type": "application/json",
             "Authorization": `Bearer ${token}`,

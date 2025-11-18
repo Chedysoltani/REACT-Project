@@ -18,12 +18,18 @@ export class UsersService {
     email: string,
     password: string,
     role: UserRole = UserRole.PATIENT,
+    clinicId?: number
   ): Promise<User> {
     const user = new User();
     user.name = name;
     user.email = email.toLowerCase();
     user.password = password;
     user.role = role;
+    
+    // Si un clinicId est fourni, on l'associe à l'utilisateur
+    if (clinicId) {
+      user.clinic = { id: clinicId } as any;
+    }
 
     try {
       return await this.usersRepository.save(user);
@@ -73,5 +79,30 @@ export class UsersService {
       select: { id: true, name: true, email: true, role: true },
       where: { role: In(roles) },
     });
+  }
+
+  /**
+   * Met à jour un utilisateur
+   */
+  async update(id: number, updateData: Partial<User>): Promise<User> {
+    // Vérifier que l'utilisateur existe
+    const user = await this.findById(id);
+    if (!user) {
+      throw new Error(`User with ID ${id} not found`);
+    }
+
+    // Ne pas permettre la mise à jour de l'email s'il est fourni
+    if (updateData.email) {
+      const existingUser = await this.findByEmail(updateData.email);
+      if (existingUser && existingUser.id !== id) {
+        throw new Error('Email already in use');
+      }
+    }
+
+    // Mettre à jour uniquement les champs fournis
+    Object.assign(user, updateData);
+    
+    // Sauvegarder les modifications
+    return this.usersRepository.save(user);
   }
 }

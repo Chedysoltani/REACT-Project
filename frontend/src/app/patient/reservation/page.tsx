@@ -1,5 +1,6 @@
 "use client"
 import React, { useState, useEffect } from "react"
+import { API_ENDPOINTS } from "@/config/api"
 
 interface Medecin {
   id: number
@@ -28,7 +29,7 @@ useEffect(() => {
         return
       }
 
-      const res = await fetch("http://localhost:5000/doctors", { // <-- changer /services en /doctors
+      const res = await fetch(API_ENDPOINTS.USERS.DOCTORS, {
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`,
@@ -68,7 +69,7 @@ useEffect(() => {
     if (!selectedMedecin) return alert("Veuillez choisir un médecin.")
     if (!selectedDate || !selectedTime) return alert("Veuillez choisir une date et une heure.")
 
-    const res = await fetch("http://localhost:5000/reservations", {
+    const res = await fetch(`${API_ENDPOINTS.APPOINTMENTS.BASE}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

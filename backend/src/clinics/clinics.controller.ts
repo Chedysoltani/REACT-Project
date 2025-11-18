@@ -2,6 +2,7 @@ import {
   Controller, 
   Get, 
   Post, 
+  Patch,
   Body, 
   Param, 
   UseGuards, 
@@ -10,8 +11,12 @@ import {
   HttpStatus, 
   HttpCode, 
   NotFoundException,
-  BadRequestException
+  BadRequestException,
+  ForbiddenException,
+  HttpException,
+  HttpStatus as NestHttpStatus
 } from '@nestjs/common';
+import { User } from '../users/user.entity';
 import { Request } from 'express';
 import { 
   ApiTags, 
@@ -26,11 +31,16 @@ import {
 interface AuthenticatedRequest extends Request {
   user: {
     userId: number;
+    email: string;
+    name: string;
+    role: string;
+    clinicId?: number;
     [key: string]: any;
   };
 }
 import { ClinicsService } from './clinics.service';
 import { CreateClinicDto } from './dto/create-clinic.dto';
+import { UpdateClinicDto } from './dto/update-clinic.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -64,6 +74,33 @@ export class ClinicsController {
     }
   }
 
+  @Patch(':id')
+  @HttpCode(HttpStatus.OK)
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Update a clinic' })
+  @ApiParam({ name: 'id', description: 'Clinic ID' })
+  @ApiResponse({ status: 200, description: 'The clinic has been successfully updated.' })
+  @ApiResponse({ status: 404, description: 'Clinic not found' })
+  @ApiResponse({ status: 400, description: 'Invalid data provided' })
+  async update(
+    @Param('id') id: string,
+    @Body() updateClinicDto: UpdateClinicDto,
+    @Req() req: AuthenticatedRequest
+  ): Promise<{ clinic: Clinic; message: string }> {
+    try {
+      const clinic = await this.clinicsService.update(id, updateClinicDto);
+      return {
+        clinic,
+        message: 'Clinic updated successfully'
+      };
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new BadRequestException(error.message || 'Failed to update clinic');
+    }
+  }
+
   @Get()
   @Roles(UserRole.ADMIN, UserRole.DOCTOR, UserRole.RECEPTIONIST)
   @ApiOperation({ summary: 'Get all clinics' })
@@ -72,12 +109,33 @@ export class ClinicsController {
     description: 'Return all clinics',
     type: [Clinic]
   })
-  async findAll(): Promise<{ clinics: Clinic[] }> {
+  @ApiResponse({ 
+    status: HttpStatus.INTERNAL_SERVER_ERROR, 
+    description: 'Internal server error occurred'
+  })
+  async findAll(@Req() req: AuthenticatedRequest): Promise<{ clinics: Clinic[] }> {
     try {
+      console.log('User role:', req.user?.role);
+      console.log('User clinicId:', req.user?.clinicId);
+      
       const clinics = await this.clinicsService.findAll();
+      console.log(`Found ${clinics.length} clinics`);
+      
       return { clinics };
     } catch (error) {
-      throw new BadRequestException('Failed to fetch clinics');
+      console.error('Error in ClinicsController.findAll:', error);
+      
+      if (error instanceof Error) {
+        throw new HttpException(
+          `Failed to fetch clinics: ${error.message}`, 
+          NestHttpStatus.INTERNAL_SERVER_ERROR
+        );
+      }
+      
+      throw new HttpException(
+        'An unexpected error occurred', 
+        NestHttpStatus.INTERNAL_SERVER_ERROR
+      );
     }
   }
 
@@ -110,29 +168,42 @@ export class ClinicsController {
   }
 
   @Post(':id/staff/:userId')
-  @Roles(UserRole.ADMIN)
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Add staff to clinic' })
+  @Roles(UserRole.ADMIN, UserRole.RECEPTIONIST)
+  @ApiOperation({ summary: 'Add a staff member to a clinic' })
   @ApiParam({ name: 'id', description: 'Clinic ID' })
   @ApiParam({ name: 'userId', description: 'User ID to add as staff' })
-  @ApiResponse({ 
-    status: HttpStatus.OK, 
-    description: 'Staff added to clinic successfully' 
-  })
-  @ApiResponse({ 
-    status: HttpStatus.NOT_FOUND, 
-    description: 'Clinic or user not found' 
-  })
+  @ApiResponse({ status: 200, description: 'Staff member added successfully' })
+  @ApiResponse({ status: 404, description: 'Clinic or user not found' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
   async addStaff(
     @Param('id') clinicId: string,
     @Param('userId', ParseIntPipe) userId: number,
-  ): Promise<{ message: string }> {
-    try {
-      await this.clinicsService.addStaff(clinicId, userId);
-      return { message: 'Staff added to clinic successfully' };
-    } catch (error) {
-      if (error instanceof NotFoundException) throw error;
-      throw new BadRequestException('Failed to add staff to clinic');
+    @Req() req: AuthenticatedRequest
+  ) {
+    // Vérifier que l'utilisateur a le droit d'ajouter du personnel à cette clinique
+    if (req.user.role === UserRole.RECEPTIONIST) {
+      const userClinic = await this.clinicsService.findByUserId(req.user.userId);
+      if (!userClinic || userClinic.id !== clinicId) {
+        throw new ForbiddenException('You can only add staff to your own clinic');
+      }
     }
+    
+    return this.clinicsService.addStaff(clinicId, userId);
+  }
+
+  @Get(':id/doctors')
+  @HttpCode(HttpStatus.OK)
+  @Roles(UserRole.ADMIN, UserRole.RECEPTIONIST, UserRole.DOCTOR)
+  @ApiOperation({ summary: 'Get all doctors for a clinic' })
+  @ApiParam({ name: 'id', description: 'Clinic ID' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'List of doctors in the clinic',
+    type: [User]
+  })
+  @ApiResponse({ status: 404, description: 'Clinic not found' })
+  async getDoctors(@Param('id') clinicId: string) {
+    return this.clinicsService.getDoctors(clinicId);
   }
 }

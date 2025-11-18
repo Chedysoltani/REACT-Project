@@ -15,13 +15,16 @@ async function bootstrap() {
 
   app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
 
-  const port = process.env.PORT || 3002;
-
+  const port = process.env.PORT || 3003;
   try {
-    await app.listen(port, '0.0.0.0');
+    await app.listen(port);
     console.log(`Application is running on: http://localhost:${port}`);
   } catch (error) {
-    console.error('Failed to start the application:', error);
+    if (error.code === 'EADDRINUSE') {
+      console.error(`Port ${port} is already in use. Please stop any other running instances.`);
+    } else {
+      console.error('Failed to start the application:', error);
+    }
     process.exit(1);
   }
 }

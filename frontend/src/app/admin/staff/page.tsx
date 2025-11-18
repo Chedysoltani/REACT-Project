@@ -1,5 +1,6 @@
 "use client"
 import React, { useEffect, useState } from "react"
+import { API_ENDPOINTS } from "@/config/api"
 
 interface Staff {
   id: number
@@ -23,7 +24,7 @@ export default function StaffPage() {
           setLoading(false)
           return
         }
-        const res = await fetch("http://localhost:5000/users/staff", {
+        const res = await fetch(API_ENDPOINTS.USERS.STAFF, {
           headers: {
             "Content-Type": "application/json",
             "Authorization": `Bearer ${token}`,

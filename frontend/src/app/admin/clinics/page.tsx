@@ -1,19 +1,22 @@
 "use client"
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { Plus, Pencil, Trash2, X } from "lucide-react"
+import { API_ENDPOINTS } from "@/config/api"
 
 type Clinic = {
-  id: number
+  id: string
   name: string
   address: string
   phone: string
+  email?: string
+  createdAt?: string
+  updatedAt?: string
 }
 
 export default function ClinicsPage() {
-  const [clinics, setClinics] = useState<Clinic[]>([
-    { id: 1, name: "Clinique El Amen", address: "Ariana", phone: "71 123 456" },
-    { id: 2, name: "Clinique Hannibal", address: "Tunis", phone: "71 789 012" },
-  ])
+  const [clinics, setClinics] = useState<Clinic[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
 
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingClinic, setEditingClinic] = useState<Clinic | null>(null)
@@ -40,38 +43,144 @@ export default function ClinicsPage() {
 
   const closeModal = () => setIsModalOpen(false)
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (editingClinic) {
-      setClinics((prev) =>
-        prev.map((c) =>
-          c.id === editingClinic.id ? { ...c, ...formData } : c
-        )
-      )
-    } else {
-      setClinics((prev) => [
-        ...prev,
-        { id: Date.now(), ...formData },
-      ])
+  // Récupérer les cliniques depuis l'API
+  useEffect(() => {
+    const fetchClinics = async () => {
+      try {
+        const token = localStorage.getItem("token")
+        if (!token) {
+          setError("Non authentifié")
+          setLoading(false)
+          return
+        }
+
+        const res = await fetch(API_ENDPOINTS.CLINICS.BASE, {
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+          },
+        })
+
+        if (!res.ok) {
+          const text = await res.text()
+          throw new Error(text || `Erreur ${res.status}`)
+        }
+
+        const data = await res.json()
+        setClinics(data.clinics)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Erreur inconnue")
+      } finally {
+        setLoading(false)
+      }
     }
-    closeModal()
+
+    fetchClinics()
+  }, [])
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    try {
+      const token = localStorage.getItem("token")
+      if (!token) {
+        setError("Non authentifié")
+        return
+      }
+
+      const url = editingClinic 
+        ? `${API_ENDPOINTS.CLINICS.BASE}/${editingClinic.id}`
+        : API_ENDPOINTS.CLINICS.BASE
+
+      const method = editingClinic ? "PATCH" : "POST"
+
+      const res = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify(formData),
+      })
+
+      if (!res.ok) {
+        const text = await res.text()
+        throw new Error(text || `Erreur ${res.status}`)
+      }
+
+      // Rafraîchir la liste des cliniques
+      const clinicsRes = await fetch(API_ENDPOINTS.CLINICS.BASE, {
+        headers: {
+          "Authorization": `Bearer ${token}`,
+        },
+      })
+      const data = await clinicsRes.json()
+      setClinics(data.clinics)
+      
+      closeModal()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur inconnue")
+    }
   }
 
-  const handleDelete = (id: number) => {
-    if (confirm("Voulez-vous vraiment supprimer cette clinique ?")) {
-      setClinics((prev) => prev.filter((c) => c.id !== id))
+  const handleDelete = async (id: string) => {
+    if (!confirm("Voulez-vous vraiment supprimer cette clinique ?")) {
+      return
     }
+
+    try {
+      const token = localStorage.getItem("token")
+      if (!token) {
+        setError("Non authentifié")
+        return
+      }
+
+      const res = await fetch(`${API_ENDPOINTS.CLINICS.BASE}/${id}`, {
+        method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+        },
+      })
+
+      if (!res.ok) {
+        const text = await res.text()
+        throw new Error(text || `Erreur ${res.status}`)
+      }
+
+      // Mettre à jour l'état local
+      setClinics(prev => prev.filter(c => c.id !== id))
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur lors de la suppression")
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+        <strong className="font-bold">Erreur !</strong>
+        <span className="block sm:inline"> {error}</span>
+      </div>
+    )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-semibold text-gray-800">Gestion des Cliniques</h1>
+    <div className="p-6">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Gestion des Cliniques</h1>
         <button
           onClick={() => openModal()}
-          className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-xl shadow hover:bg-indigo-700 transition"
+          className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700 transition"
         >
-          <Plus size={18} /> Ajouter
+          <Plus size={18} />
+          Ajouter une clinique
         </button>
       </div>
 

@@ -1,5 +1,6 @@
 "use client"
 import React, { useState, useEffect } from "react"
+import { API_ENDPOINTS } from "@/config/api"
 
 interface RendezVous {
   id: number;
@@ -20,7 +21,7 @@ export default function RendezVousPage() {
         const token = localStorage.getItem("token");
         if (!token) throw new Error("Token manquant");
 
-        const res = await fetch("http://localhost:5000/reservations/me", {
+        const res = await fetch(`${API_ENDPOINTS.APPOINTMENTS.BASE}/me`, {
           headers: {
             "Content-Type": "application/json",
             "Authorization": `Bearer ${token}`,
