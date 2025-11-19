@@ -5,11 +5,12 @@ import { ConfigService } from '@nestjs/config';
 import { UserRole } from '../../users/user.entity';
 
 type JwtPayload = {
-  sub: string;
+  sub: number;
   email: string;
-  name: string;
+  firstName: string;
+  lastName: string;
   role: UserRole;
-  clinicId?: number;
+  clinicId?: string;
 };
 
 @Injectable()
@@ -28,16 +29,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new Error('No role found in JWT payload');
     }
 
-    // Convertir l'ID de l'utilisateur en nombre
-    const userId = parseInt(payload.sub, 10);
-    if (isNaN(userId)) {
-      throw new Error('Invalid user ID in JWT payload');
-    }
-
     return { 
-      userId: userId, 
+      id: payload.sub, 
       email: payload.email,
-      name: payload.name,
+      firstName: payload.firstName,
+      lastName: payload.lastName,
       role: payload.role,
       clinicId: payload.clinicId
     };

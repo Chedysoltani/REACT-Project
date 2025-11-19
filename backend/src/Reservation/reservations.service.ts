@@ -15,14 +15,21 @@ export class ReservationsService {
   async createReservation(patientId: number, dto: CreateReservationDto) {
     const reservation = this.reservationRepo.create({
       patient: { id: patientId },
-      medecin: { id: dto.medecinId },
-      dateReservation: dto.date, // ou dto.dateReservation selon ton DTO
+      doctor: { id: dto.doctorId },
+      dateReservation: dto.date,
     });
     return this.reservationRepo.save(reservation);
   }
 
   async findAll() {
-    return this.reservationRepo.find({ relations: ['patient', 'medecin'] });
+    return this.reservationRepo.find({ 
+      relations: ['patient', 'doctor'],
+      where: {
+        doctor: {
+          role: 'doctor' as any // Type assertion pour le rôle
+        }
+      }
+    });
   }
 
   async findByPatient(patientId: number) {
@@ -31,11 +38,11 @@ export class ReservationsService {
       relations: ['medecin'],
     });
   }
-  async findByMedecin(medecinId: number) {
-  return this.reservationRepo.find({
-    where: { medecin: { id: medecinId } },
-    relations: ['patient'], // inclut les infos du patient
-  });
-}
+  async findByDoctor(doctorId: number) {
+    return this.reservationRepo.find({
+      where: { doctor: { id: doctorId } },
+      relations: ['patient', 'doctor'], // inclut les infos du patient et du médecin
+    });
+  }
 
 }

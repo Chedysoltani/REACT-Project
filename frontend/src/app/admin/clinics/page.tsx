@@ -67,7 +67,15 @@ export default function ClinicsPage() {
         }
 
         const data = await res.json()
-        setClinics(data.clinics)
+        // Vérification de la structure de la réponse
+        if (Array.isArray(data)) {
+          setClinics(data)
+        } else if (data && Array.isArray(data.clinics)) {
+          setClinics(data.clinics)
+        } else {
+          console.warn('Format de réponse inattendu:', data)
+          setClinics([])
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Erreur inconnue")
       } finally {
@@ -195,7 +203,7 @@ export default function ClinicsPage() {
             </tr>
           </thead>
           <tbody>
-            {clinics.map((clinic) => (
+            {Array.isArray(clinics) && clinics.length > 0 ? clinics.map((clinic) => (
               <tr key={clinic.id} className="border-b hover:bg-gray-50 transition">
                 <td className="py-3">{clinic.name}</td>
                 <td>{clinic.address}</td>
@@ -217,11 +225,10 @@ export default function ClinicsPage() {
                   </button>
                 </td>
               </tr>
-            ))}
-            {clinics.length === 0 && (
+            )) : (
               <tr>
                 <td colSpan={4} className="text-center py-6 text-gray-500 italic">
-                  Aucune clinique enregistrée.
+                  {loading ? 'Chargement...' : 'Aucune clinique enregistrée.'}
                 </td>
               </tr>
             )}

@@ -6,14 +6,15 @@ import { AuthModule } from './auth/auth.module';
 import { User } from './users/user.entity';
 import { AppController } from './app.controller';
 import { AuthController } from './auth/auth.controller';
-import { Doctor } from './services/doctor.entity';
-import { DoctorsModule } from './services/doctors.module';
+// Les références à Doctor ont été supprimées car nous utilisons maintenant User avec le rôle DOCTOR
 import { ReservationsModule } from './Reservation/reservations.module';
 import { Reservation } from './Reservation/reservation.entity';
 import { ClinicsModule } from './clinics/clinics.module';
 import { Clinic } from './clinics/entities/clinic.entity';
 import { AdminModule } from './admin/admin.module';
+import { DoctorsModule } from './services/doctors.module';
 import { Patient } from './patients/patient.entity';
+import { Doctor } from './services/doctor.entity';
 
 @Module({
   imports: [
@@ -31,9 +32,8 @@ import { Patient } from './patients/patient.entity';
         username: configService.get<string>('DB_USERNAME', 'postgres'),
         password: configService.get<string>('DB_PASSWORD', 'postgres'),
         database: configService.get<string>('DB_DATABASE', 'nest_auth'),
-        entities: [User, Doctor, Reservation, Clinic, Patient],
-        synchronize:
-          configService.get<string>('NODE_ENV', 'development') !== 'production',
+        entities: [User, Reservation, Clinic, Patient, Doctor],
+        synchronize: false,
         logging:
           configService.get<string>('NODE_ENV', 'development') == 'development',
       }),

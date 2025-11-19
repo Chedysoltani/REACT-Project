@@ -1,9 +1,6 @@
 import { DataSource } from 'typeorm';
 import { config } from 'dotenv';
-import { User } from './users/user.entity';
-import { Doctor } from './services/doctor.entity';
-import { Reservation } from './Reservation/reservation.entity';
-import { Clinic } from './clinics/entities/clinic.entity';
+import * as path from 'path';
 
 config();
 
@@ -14,8 +11,8 @@ export const AppDataSource = new DataSource({
   username: process.env.DB_USERNAME || 'postgres',
   password: process.env.DB_PASSWORD || 'postgres',
   database: process.env.DB_DATABASE || 'nest_auth',
-  entities: [__dirname + '/**/*.entity{.ts,.js}'],
-  migrations: [__dirname + '/migrations/*{.ts,.js}'],
+  entities: [path.join(__dirname, '**/*.entity{.ts,.js}')],
+  migrations: [path.join(__dirname, 'migrations/*{.ts,.js}')],
   synchronize: false,
   migrationsRun: false,
   logging: true,

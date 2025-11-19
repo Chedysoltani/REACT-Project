@@ -11,6 +11,8 @@ export const API_ENDPOINTS = {
     BASE: `${API_BASE_URL}/users`,
     STAFF: `${API_BASE_URL}/users/staff`,
     DOCTORS: `${API_BASE_URL}/doctors`,
+    DELETE: (id: string | number) => `${API_BASE_URL}/users/admin/users/${id}`,
+    UPDATE: (id: string | number) => `${API_BASE_URL}/users/${id}`,
   },
   DOCTORS: {
     BASE: `${API_BASE_URL}/doctors`,

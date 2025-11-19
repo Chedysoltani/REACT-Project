@@ -12,9 +12,9 @@ import {
   NotFoundException
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
-import { Doctor } from './doctor.entity';
+import { User } from '../users/user.entity';
 import { DoctorService } from './doctors.service';
-import { CreateDoctorDto } from './dto/create-doctor.dto';
+import { CreateDoctorDto } from '../users/dto/create-doctor.dto';
 import { UpdateDoctorDto } from './dto/update-doctor.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -31,23 +31,23 @@ export class DoctorController {
   @Post()
   @Roles(UserRole.ADMIN, UserRole.CLINIC_ADMIN)
   @ApiOperation({ summary: 'Créer un nouveau médecin' })
-  @ApiResponse({ status: 201, description: 'Médecin créé avec succès', type: Doctor })
+  @ApiResponse({ status: 201, description: 'Médecin créé avec succès', type: User })
   @ApiResponse({ status: 400, description: 'Données invalides' })
   @ApiResponse({ status: 401, description: 'Non autorisé' })
   @ApiResponse({ status: 409, description: 'Un médecin avec cet email existe déjà' })
-  async create(@Body() createDoctorDto: CreateDoctorDto): Promise<Doctor> {
+  async create(@Body() createDoctorDto: CreateDoctorDto): Promise<User> {
     return this.doctorService.create(createDoctorDto);
   }
 
   @Get()
   @Roles(UserRole.ADMIN, UserRole.CLINIC_ADMIN, UserRole.DOCTOR, UserRole.PATIENT)
   @ApiOperation({ summary: 'Récupérer tous les médecins' })
-  @ApiResponse({ status: 200, description: 'Liste des médecins', type: [Doctor] })
+  @ApiResponse({ status: 200, description: 'Liste des médecins', type: [User] })
   @ApiResponse({ status: 401, description: 'Non autorisé' })
   async findAll(
     @Query('clinicId') clinicId?: string,
     @Query('specialty') specialty?: string
-  ): Promise<Doctor[]> {
+  ): Promise<User[]> {
     // Implémentation de la recherche par clinique et/ou spécialité si nécessaire
     if (clinicId) {
       return this.doctorService.findByClinic(clinicId);
@@ -61,30 +61,23 @@ export class DoctorController {
   @Get(':id')
   @Roles(UserRole.ADMIN, UserRole.CLINIC_ADMIN, UserRole.DOCTOR, UserRole.PATIENT)
   @ApiOperation({ summary: 'Récupérer un médecin par son ID' })
-  @ApiParam({ name: 'id', description: 'ID du médecin', type: Number })
-  @ApiResponse({ status: 200, description: 'Médecin trouvé', type: Doctor })
+  @ApiParam({ name: 'id', description: 'ID du médecin' })
+  @ApiResponse({ status: 200, description: 'Médecin trouvé', type: User })
   @ApiResponse({ status: 404, description: 'Médecin non trouvé' })
-  @ApiResponse({ status: 401, description: 'Non autorisé' })
-  async findOne(@Param('id', ParseIntPipe) id: number): Promise<Doctor> {
-    const doctor = await this.doctorService.findOne(id);
-    if (!doctor) {
-      throw new NotFoundException(`Médecin avec l'ID ${id} non trouvé`);
-    }
-    return doctor;
+  async findOne(@Param('id', ParseIntPipe) id: number): Promise<User> {
+    return this.doctorService.findOne(id);
   }
 
   @Put(':id')
-  @Roles(UserRole.ADMIN, UserRole.CLINIC_ADMIN, UserRole.DOCTOR)
+  @Roles(UserRole.ADMIN, UserRole.CLINIC_ADMIN)
   @ApiOperation({ summary: 'Mettre à jour un médecin' })
-  @ApiParam({ name: 'id', description: 'ID du médecin à mettre à jour', type: Number })
-  @ApiResponse({ status: 200, description: 'Médecin mis à jour', type: Doctor })
+  @ApiParam({ name: 'id', description: 'ID du médecin à mettre à jour' })
+  @ApiResponse({ status: 200, description: 'Médecin mis à jour avec succès', type: User })
   @ApiResponse({ status: 404, description: 'Médecin non trouvé' })
-  @ApiResponse({ status: 400, description: 'Données invalides' })
-  @ApiResponse({ status: 401, description: 'Non autorisé' })
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateDoctorDto: UpdateDoctorDto,
-  ): Promise<Doctor> {
+  ): Promise<User> {
     return this.doctorService.update(id, updateDoctorDto);
   }
 

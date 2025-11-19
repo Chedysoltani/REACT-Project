@@ -4,6 +4,8 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { toast } from 'react-hot-toast';
+import { EyeIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
+import Link from 'next/link';
 
 type UserRole = 'patient' | 'doctor' | 'receptionist' | 'admin';
 
@@ -55,7 +57,7 @@ export default function AdminDashboard() {
       const response = await fetch('http://localhost:3000/admin/dashboard', {
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session?.accessToken}`,
+          'Authorization': `Bearer ${session?.user?.accessToken || ''}`,
         },
       });
 
@@ -72,6 +74,43 @@ export default function AdminDashboard() {
       toast.error('Erreur lors du chargement du tableau de bord');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Fonctions de gestion des actions
+  const handleViewDetails = (userId: number) => {
+    // Rediriger vers la page de détails de l'utilisateur
+    router.push(`/admin/users/${userId}`);
+  };
+
+  const handleEditUser = (userId: number) => {
+    // Rediriger vers la page d'édition de l'utilisateur
+    router.push(`/admin/users/${userId}/edit`);
+  };
+
+  const handleDeleteUser = async (userId: number) => {
+    if (confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')) {
+      try {
+        const response = await fetch(`http://localhost:3000/users/admin/users/${userId}`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session?.user?.accessToken}`,
+          },
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Échec de la suppression');
+        }
+
+        toast.success('Utilisateur supprimé avec succès');
+        // Rafraîchir les données
+        await fetchDashboardData();
+      } catch (error) {
+        console.error('Erreur lors de la suppression:', error);
+        toast.error(error instanceof Error ? error.message : 'Erreur lors de la suppression de l\'utilisateur');
+      }
     }
   };
 
@@ -142,6 +181,7 @@ export default function AdminDashboard() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nom</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rôle</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -158,6 +198,29 @@ export default function AdminDashboard() {
                       }`}>
                         {user.role}
                       </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium flex space-x-2">
+                      <button
+                        onClick={() => handleViewDetails(user.id)}
+                        className="text-blue-600 hover:text-blue-900"
+                        title="Voir les détails"
+                      >
+                        <EyeIcon className="h-5 w-5" />
+                      </button>
+                      <button
+                        onClick={() => handleEditUser(user.id)}
+                        className="text-yellow-600 hover:text-yellow-900"
+                        title="Modifier"
+                      >
+                        <PencilIcon className="h-5 w-5" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteUser(user.id)}
+                        className="text-red-600 hover:text-red-900"
+                        title="Supprimer"
+                      >
+                        <TrashIcon className="h-5 w-5" />
+                      </button>
                     </td>
                   </tr>
                 ))}

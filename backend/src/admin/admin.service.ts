@@ -3,8 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../users/user.entity';
 import { Clinic } from '../clinics/entities/clinic.entity';
-import { Doctor } from '../services/doctor.entity';
 import { Patient } from '../patients/patient.entity';
+import { UserRole } from '../users/user.entity';
 
 @Injectable()
 export class AdminService {
@@ -13,8 +13,6 @@ export class AdminService {
     private usersRepository: Repository<User>,
     @InjectRepository(Clinic)
     private clinicsRepository: Repository<Clinic>,
-    @InjectRepository(Doctor)
-    private doctorsRepository: Repository<Doctor>,
     @InjectRepository(Patient)
     private patientsRepository: Repository<Patient>,
   ) {}
@@ -23,7 +21,7 @@ export class AdminService {
     const [totalUsers, totalClinics, totalDoctors, totalPatients] = await Promise.all([
       this.usersRepository.count(),
       this.clinicsRepository.count(),
-      this.doctorsRepository.count(),
+      this.usersRepository.count({ where: { role: UserRole.DOCTOR } }),
       this.patientsRepository.count(),
     ]);
 

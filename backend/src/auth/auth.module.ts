@@ -8,12 +8,14 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { AuthController } from './auth.controller';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { Clinic } from '../clinics/entities/clinic.entity';
+import { User } from '../users/user.entity';
+import { LocalStrategy } from './strategies/local.strategy';
 
 @Module({
   imports: [
     UsersModule,
     PassportModule,
-    TypeOrmModule.forFeature([Clinic]),
+    TypeOrmModule.forFeature([Clinic, User]),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
@@ -26,7 +28,8 @@ import { Clinic } from '../clinics/entities/clinic.entity';
   controllers: [AuthController],
   providers: [
     AuthService, 
-    JwtStrategy
+    JwtStrategy,
+    LocalStrategy
   ],
   exports: [AuthService, JwtModule, PassportModule],
 })

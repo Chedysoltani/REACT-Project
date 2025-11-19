@@ -113,19 +113,33 @@ export class ClinicsController {
     status: HttpStatus.INTERNAL_SERVER_ERROR, 
     description: 'Internal server error occurred'
   })
-  async findAll(@Req() req: AuthenticatedRequest): Promise<{ clinics: Clinic[] }> {
+  async findAll(@Req() req: AuthenticatedRequest): Promise<Clinic[]> {
     try {
+      console.log('=== ClinicsController.findAll ===');
+      console.log('User:', req.user);
       console.log('User role:', req.user?.role);
       console.log('User clinicId:', req.user?.clinicId);
       
+      console.log('Calling clinicsService.findAll()...');
       const clinics = await this.clinicsService.findAll();
-      console.log(`Found ${clinics.length} clinics`);
+      console.log(`Successfully retrieved ${clinics.length} clinics`);
       
-      return { clinics };
+      // Log des premières cliniques pour le débogage
+      if (clinics.length > 0) {
+        console.log('First clinic sample:', {
+          id: clinics[0].id,
+          name: clinics[0].name,
+          users: clinics[0].users ? clinics[0].users.length : 0
+        });
+      }
+      
+      return clinics;
     } catch (error) {
-      console.error('Error in ClinicsController.findAll:', error);
+      console.error('=== ERROR in ClinicsController.findAll ===');
+      console.error('Error details:', error);
       
       if (error instanceof Error) {
+        console.error('Error stack:', error.stack);
         throw new HttpException(
           `Failed to fetch clinics: ${error.message}`, 
           NestHttpStatus.INTERNAL_SERVER_ERROR
@@ -133,7 +147,7 @@ export class ClinicsController {
       }
       
       throw new HttpException(
-        'An unexpected error occurred', 
+        'An unexpected error occurred while fetching clinics', 
         NestHttpStatus.INTERNAL_SERVER_ERROR
       );
     }

@@ -1,38 +1,22 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
-import { Clinic } from '../clinics/entities/clinic.entity';
+import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
 
 @Entity('doctors')
 export class Doctor {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'varchar', nullable: false })
-  firstName: string;
-
-  @Column({ type: 'varchar', nullable: false })
-  lastName: string;
-
-  @Column({ type: 'varchar', nullable: false, unique: true })
-  email: string;
-
-  @Column({ type: 'varchar', nullable: false, select: false })
-  password: string;
-
-  @Column({ type: 'varchar', nullable: false })
-  address: string;
-
-  @Column({ type: 'varchar', nullable: false })
-  phone: string;
-
-  @Column({ type: 'varchar', nullable: false })
+  @Column({ type: 'varchar', length: 255 })
   specialty: string;
 
-  @ManyToOne(() => Clinic, clinic => clinic.doctors, { nullable: false })
-  @JoinColumn({ name: 'clinicId' })
-  clinic: Clinic;
+  @Column({ type: 'text', nullable: true })
+  bio: string;
 
-  @Column({ nullable: false })
-  clinicId: number;
+  @Column({ type: 'json', nullable: true })
+  schedule: Record<string, any>;
+
+  // Référence à l'utilisateur sans créer de relation circulaire
+  @Column({ type: 'int', unique: true })
+  userId: number;
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;

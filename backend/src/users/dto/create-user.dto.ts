@@ -1,9 +1,12 @@
-import { IsEmail, IsEnum, IsNotEmpty, MinLength, IsOptional, IsInt, Min } from 'class-validator';
+import { IsEmail, IsEnum, IsNotEmpty, MinLength, IsOptional, IsUUID, IsString } from 'class-validator';
 import { UserRole } from '../user.entity';
 
 export class CreateUserDto {
-  @IsNotEmpty({ message: 'Le nom est requis' })
-  name: string;
+  @IsNotEmpty({ message: 'Le prénom est requis' })
+  firstName: string;
+
+  @IsNotEmpty({ message: 'Le nom de famille est requis' })
+  lastName: string;
 
   @IsEmail({}, { message: 'Email invalide' })
   email: string;
@@ -16,7 +19,14 @@ export class CreateUserDto {
   role: UserRole;
 
   @IsOptional()
-  @IsInt({ message: 'ID de clinique invalide' })
-  @Min(1, { message: 'ID de clinique invalide' })
-  clinicId?: number;
+  @IsUUID(4, { message: 'ID de clinique invalide' })
+  clinicId?: string;
+
+  @IsOptional()
+  @IsString({ message: 'La spécialité doit être une chaîne de caractères' })
+  specialty?: string;
+
+  @IsOptional()
+  @IsString({ message: 'Le numéro de téléphone doit être une chaîne de caractères' })
+  phone?: string;
 }

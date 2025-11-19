@@ -18,9 +18,10 @@ export class ClinicsService {
     const clinic = this.clinicsRepository.create(createClinicDto);
     const savedClinic = await this.clinicsRepository.save(clinic);
     
-    // Associer l'admin à la clinique
+    // Associate admin with the clinic
     await this.usersRepository.update(adminId, { 
-      clinicId: savedClinic.id as unknown as number 
+      clinicId: savedClinic.id,
+      role: UserRole.CLINIC_ADMIN
     });
     
     return savedClinic;
@@ -28,21 +29,45 @@ export class ClinicsService {
 
   async findAll(): Promise<Clinic[]> {
     try {
-      return await this.clinicsRepository.find({
-        relations: ['staff'],
-        select: ['id', 'name', 'address', 'phone', 'email', 'createdAt', 'updatedAt'],
+      console.log('Fetching clinics...');
+      
+      // Récupérer d'abord les cliniques sans les relations
+      const clinics = await this.clinicsRepository.find({
         order: { name: 'ASC' }
       });
+      
+      console.log(`Found ${clinics.length} clinics`);
+      
+      // Pour chaque clinique, charger les utilisateurs séparément
+      const clinicsWithUsers = await Promise.all(
+        clinics.map(async (clinic) => {
+          const users = await this.usersRepository.find({
+            where: { clinicId: clinic.id },
+            select: ['id', 'firstName', 'lastName', 'email', 'role']
+          });
+          
+          return {
+            ...clinic,
+            users
+          };
+        })
+      );
+      
+      return clinicsWithUsers;
     } catch (error) {
       console.error('Error in ClinicsService.findAll:', error);
+      // Afficher plus de détails sur l'erreur
+      if (error instanceof Error) {
+        console.error('Error details:', error.message, error.stack);
+      }
       throw new Error('Failed to retrieve clinics');
     }
   }
 
   async findOne(id: string): Promise<Clinic> {
     const clinic = await this.clinicsRepository.findOne({
-      where: { id } as FindOptionsWhere<Clinic>,
-      relations: ['staff'],
+      where: { id },
+      relations: ['users'],
     });
     
     if (!clinic) {
@@ -58,7 +83,7 @@ export class ClinicsService {
       throw new NotFoundException(`Clinic with ID ${id} not found`);
     }
 
-    // Mise à jour des champs fournis
+    // Update provided fields
     Object.assign(clinic, updateClinicDto);
     
     return this.clinicsRepository.save(clinic);
@@ -72,18 +97,30 @@ export class ClinicsService {
   }
 
   async getDoctors(clinicId: string): Promise<User[]> {
-    const clinic = await this.findOne(clinicId);
+    // Vérifier que la clinique existe
+    const clinic = await this.clinicsRepository.findOne({ where: { id: clinicId } });
+    if (!clinic) {
+      throw new NotFoundException(`Clinic with ID ${clinicId} not found`);
+    }
     
     // Récupérer uniquement les utilisateurs avec le rôle 'doctor' pour cette clinique
-    const doctors = await this.usersRepository.find({
+    return this.usersRepository.find({
       where: {
-        clinicId: clinic.id as unknown as number,
+        clinicId: clinic.id,
         role: UserRole.DOCTOR
       },
-      select: ['id', 'name', 'email', 'role', 'createdAt']
+      select: [
+        'id', 
+        'firstName', 
+        'lastName', 
+        'email', 
+        'role', 
+        'specialty',
+        'phone',
+        'createdAt'
+      ],
+      order: { lastName: 'ASC', firstName: 'ASC' }
     });
-    
-    return doctors;
   }
 
   async findByUserId(userId: number): Promise<Clinic | null> {
@@ -96,8 +133,19 @@ export class ClinicsService {
   }
 
   async addStaff(clinicId: string, userId: number): Promise<Clinic> {
-    const clinic = await this.findOne(clinicId);
-    const user = await this.usersRepository.findOne({ where: { id: userId } });
+    const clinic = await this.clinicsRepository.findOne({ 
+      where: { id: clinicId },
+      relations: ['users']
+    });
+    
+    if (!clinic) {
+      throw new NotFoundException(`Clinic with ID ${clinicId} not found`);
+    }
+    
+    const user = await this.usersRepository.findOne({ 
+      where: { id: userId },
+      relations: ['clinic']
+    });
     
     if (!user) {
       throw new NotFoundException(`User with ID ${userId} not found`);
@@ -106,6 +154,6 @@ export class ClinicsService {
     user.clinic = clinic;
     await this.usersRepository.save(user);
     
-    return this.findOne(clinicId);
+    return clinic;
   }
 }

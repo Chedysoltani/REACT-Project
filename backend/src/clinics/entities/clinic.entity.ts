@@ -1,6 +1,5 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 import { User } from '../../users/user.entity';
-import { Doctor } from '../../services/doctor.entity';
 
 @Entity('clinics')
 export class Clinic {
@@ -19,15 +18,15 @@ export class Clinic {
   @Column({ nullable: true })
   email: string;
 
-  @OneToMany('User', 'clinic', { nullable: true })
-  staff: User[];
+  @OneToMany(() => User, user => user.clinic, { nullable: true })
+  users: User[];
 
-  @OneToMany(() => Doctor, doctor => doctor.clinic, { nullable: true })
-  doctors: Doctor[];
+  // Relation avec les médecins (utilisateurs avec le rôle DOCTOR)
+  doctors: User[];
 
-  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  @CreateDateColumn()
   createdAt: Date;
 
-  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP', onUpdate: 'CURRENT_TIMESTAMP' })
+  @UpdateDateColumn()
   updatedAt: Date;
 }

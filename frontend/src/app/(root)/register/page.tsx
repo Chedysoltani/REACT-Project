@@ -6,22 +6,26 @@ import toast from 'react-hot-toast';
 import { API_ENDPOINTS } from '@/config/api';
 
 interface FormData {
-  name: string;
+  firstName: string;
+  lastName: string;
   email: string;
   password: string;
   confirmPassword: string;
   role: 'patient' | 'doctor' | 'receptionist' | 'admin';
+  phone?: string;
 }
 
 export default function RegisterPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState<FormData>({
-    name: '',
+    firstName: '',
+    lastName: '',
     email: '',
     password: '',
     confirmPassword: '',
     role: 'patient',
+    phone: ''
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -43,16 +47,24 @@ export default function RegisterPage() {
     setIsLoading(true);
     
     try {
-      const response = await fetch(API_ENDPOINTS.AUTH.REGISTER, {
+      // Utiliser l'endpoint spécifique pour l'inscription des patients
+      const endpoint = formData.role === 'patient' 
+        ? `${API_ENDPOINTS.AUTH.REGISTER}/patient`
+        : API_ENDPOINTS.AUTH.REGISTER;
+      
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          name: formData.name,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
           email: formData.email,
           password: formData.password,
-          role: formData.role,
+          phone: formData.phone,
+          // Le rôle est défini automatiquement pour les patients, sinon on l'envoie
+          ...(formData.role !== 'patient' && { role: formData.role })
         }),
       });
 
@@ -112,28 +124,78 @@ export default function RegisterPage() {
             <form onSubmit={handleSubmit} className="space-y-4">
 
               {/* Nom complet */}
+              <div className="grid grid-cols-2 gap-4">
+                <motion.div
+                  initial={{ x: -20, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  transition={{ delay: 0.1, duration: 0.5 }}
+                  className="space-y-1"
+                >
+                  <label className="block text-sm font-medium text-gray-700">
+                    Prénom <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                    </div>
+                    <input
+                      type="text"
+                      name="firstName"
+                      value={formData.firstName}
+                      onChange={handleChange}
+                      required
+                      placeholder="Votre prénom"
+                      className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg bg-white/50 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+                    />
+                  </div>
+                </motion.div>
+
+                <motion.div
+                  initial={{ x: -20, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  transition={{ delay: 0.15, duration: 0.5 }}
+                  className="space-y-1"
+                >
+                  <label className="block text-sm font-medium text-gray-700">
+                    Nom <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      name="lastName"
+                      value={formData.lastName}
+                      onChange={handleChange}
+                      required
+                      placeholder="Votre nom"
+                      className="block w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white/50 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+                    />
+                  </div>
+                </motion.div>
+              </div>
+
               <motion.div
                 initial={{ x: -20, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
-                transition={{ delay: 0.1, duration: 0.5 }}
+                transition={{ delay: 0.2, duration: 0.5 }}
                 className="space-y-1"
               >
                 <label className="block text-sm font-medium text-gray-700">
-                  Nom complet <span className="text-red-500">*</span>
+                  Téléphone
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                     </svg>
                   </div>
                   <input
-                    type="text"
-                    name="name"
-                    value={formData.name}
+                    type="tel"
+                    name="phone"
+                    value={formData.phone || ''}
                     onChange={handleChange}
-                    required
-                    placeholder="Votre nom complet"
+                    placeholder="Votre numéro de téléphone"
                     className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg bg-white/50 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
                   />
                 </div>

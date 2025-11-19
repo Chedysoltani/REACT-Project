@@ -31,9 +31,9 @@ export class ReservationsController {
 
   // Récupérer les réservations pour le médecin connecté
   @UseGuards(JwtAuthGuard)
-  @Get('me/medecin')
-  findReservationsForMedecin(@Req() req: any) {
-    const medecinId = req.user.id;
-    return this.reservationsService.findByMedecin(medecinId);
+  @Get('me/doctor')
+  findReservationsForDoctor(@Req() req: any) {
+    const doctorId = req.user.id;
+    return this.reservationsService.findByDoctor(doctorId);
   }
 }
